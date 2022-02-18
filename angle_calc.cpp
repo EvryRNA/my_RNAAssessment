@@ -15,17 +15,19 @@ vector<vector<float> > coord_pdb(string pdbfile){
 	vector<string> tab_atom;
 	ifstream fl(pdbfile);
 	string line;
+	string Atom;
 	const vector<string> refer = {"N ","CA","C "};
 	int i = -1;
 
 	while(getline(fl, line)){
 		if (line.substr(0,4) == "ATOM"){
-			tab_atom.push_back(line.substr(13,2));
+			Atom = line.substr(13,2);
+			tab_atom.push_back(Atom);
 			if (tab_atom.front() != refer.front())
 			{
 				tab_atom.pop_back();
 			} else {
-				if (*find(refer.begin(), refer.end(), line.substr(13,2)) == line.substr(13,2))
+				if (*find(refer.begin(), refer.end(), Atom) == Atom)
 				{
 					float X = stof(line.substr(30,8));  //
 					float Y = stof(line.substr(38,8));  // Convert string to float
@@ -108,7 +110,7 @@ int main(int argc, char** argv)
 		string fl = line;
 		cout << fl << endl;
 		vector<vector<float> > Coords;
-		string namef = argv[3];
+		string namef = argv[3];         // Output file name without extension (".txt",".out",etc...)
 		string ffile = namef+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
 		
 		ofstream file_out;
