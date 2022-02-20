@@ -22,10 +22,10 @@ vector<vector<float> > coord_pdb(string pdbfile){
 	while(getline(fl, line)){
 		if (line.substr(0,4) == "ATOM"){
 			Atom = line.substr(13,2);
-			tab_atom.push_back(Atom);
-			if (tab_atom.front() != refer.front())
-			{
-				tab_atom.pop_back();
+			tab_atom.push_back(Atom);               //
+			if (tab_atom.front() != refer.front())  // Avoids possible mismatches if the N-ter part
+			{                                       // is missing from the PDB file 
+				tab_atom.pop_back();            //
 			} else {
 				if (*find(refer.begin(), refer.end(), Atom) == Atom)
 				{
