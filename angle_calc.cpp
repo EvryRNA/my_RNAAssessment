@@ -10,9 +10,9 @@
 using namespace std;
 
 /* Store the coordinates of the atoms we are interested in for 1 PDB file */
-vector<vector<vector<float> >> coord_pdb(string pdbfile){
-	vector<vector<vector<float> >> tableau;         // Atomic coordinates for all chains
-	vector<vector<float> > interm_tab;              // Atomic coordinates for current chain
+vector<vector<vector<string> >> coord_pdb(string pdbfile){
+	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
+	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
 	vector<string> tab_atom;
 	vector<string> tab_chain = {"A"};               // To now in which chain we are currently (start with "A")
 	string line;
@@ -33,14 +33,16 @@ vector<vector<vector<float> >> coord_pdb(string pdbfile){
 				{
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						float X = stof(line.substr(30,8));  //
-						float Y = stof(line.substr(38,8));  // Convert string to float
-						float Z = stof(line.substr(46,8));  //
-						interm_tab.push_back(vector<float>(3,0.0));
+						string X = line.substr(30,8);  //stof(
+						string Y = line.substr(38,8);  // Convert string to float
+						string Z = line.substr(46,8);  //
+						string residu = line.substr(17,3);
+						interm_tab.push_back(vector<string>(4));
 						i += 1;
 						interm_tab[i][0] = X;  //
 						interm_tab[i][1] = Y;  // Atomic coordinates x, y, z
 						interm_tab[i][2] = Z;  //
+						interm_tab[i][3] = residu;
 					}
 				}else {
 					tab_chain.push_back(line.substr(21,1));       // Chain changing
@@ -52,14 +54,16 @@ vector<vector<vector<float> >> coord_pdb(string pdbfile){
 					i = -1;
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						float X = stof(line.substr(30,8));  //
-						float Y = stof(line.substr(38,8));  // Convert string to float
-						float Z = stof(line.substr(46,8));  //
-						interm_tab.push_back(vector<float>(3,0.0));
+						string X = line.substr(30,8);  //
+						string Y = line.substr(38,8);  // Convert string to float
+						string Z = line.substr(46,8);  //
+						string residu = line.substr(17,3);
+						interm_tab.push_back(vector<string>(4));
 						i += 1;
 						interm_tab[i][0] = X;  //
 						interm_tab[i][1] = Y;  // Atomic coordinates x, y, z
 						interm_tab[i][2] = Z;  //
+						interm_tab[i][3] = residu;
 					}
 				}
 			}		
@@ -105,10 +109,10 @@ float scalar_prod(vector<float> vect1, vector<float> vect2){
 
 
 // Return the torsion angle between atom2 and atom3
-float torsion_angle(vector<float> atom1, vector<float> atom2, vector<float> atom3, vector<float> atom4){
-	vector<float> vecteur12 = {atom1[0]-atom2[0],atom1[1]-atom2[1],atom1[2]-atom2[2]};
-    vector<float> vecteur23 = {atom2[0]-atom3[0],atom2[1]-atom3[1],atom2[2]-atom3[2]};
-    vector<float> vecteur34 = {atom3[0]-atom4[0],atom3[1]-atom4[1],atom3[2]-atom4[2]};
+float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> atom3, vector<string> atom4){
+	vector<float> vecteur12 = {stof(atom1[0])-stof(atom2[0]),stof(atom1[1])-stof(atom2[1]),stof(atom1[2])-stof(atom2[2])};
+    vector<float> vecteur23 = {stof(atom2[0])-stof(atom3[0]),stof(atom2[1])-stof(atom3[1]),stof(atom2[2])-stof(atom3[2])};
+    vector<float> vecteur34 = {stof(atom3[0])-stof(atom4[0]),stof(atom3[1])-stof(atom4[1]),stof(atom3[2])-stof(atom4[2])};
 
     vector<float> vecteur_normal1 = vector_prod(vecteur12, vecteur23);
     vector<float> vecteur_normal2 = vector_prod(vecteur23, vecteur34);
@@ -138,7 +142,7 @@ int main(int argc, char** argv)
 	{
 		string fl = line;
 		cout << fl << endl;
-		vector<vector<vector<float> >> Coords;
+		vector<vector<vector<string> >> Coords;
 		string namef = argv[3];                   // Output file name without extension (".txt",".out",etc...)
 		string ffile = namef+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
 		
@@ -153,12 +157,12 @@ int main(int argc, char** argv)
 			{
 		        file_out << "Chain " << k+1 << endl;
 				cout << "Chain " << k+1 << endl;
-				for (int i = 0; i < Coords[k].size()-6; i+=3)
+				for (int i = 0; i < Coords[k].size()-5; i+=3)
 				{
 					int j = i+2;
-					float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);
-					float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);
-					file_out << angle_psi << "   " << angle_phi << endl;
+					float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
+					float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
+					file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
 				}
 			}
 		}
