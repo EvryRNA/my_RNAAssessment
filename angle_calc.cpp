@@ -9,12 +9,12 @@
 
 using namespace std;
 
-/* Store the coordinates of the atoms we are interested in for 1 PDB file */
+/**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
 vector<vector<vector<string> >> coord_pdb(string pdbfile){
 	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
 	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
 	vector<string> tab_atom;
-	vector<string> tab_chain = {"A"};               // To now in which chain we are currently (start with "A")
+	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
 	const vector<string> refer = {"N ","CA","C "};  // Atoms that interest us
@@ -33,35 +33,35 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 				{
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						string X = line.substr(30,8);  //stof(
-						string Y = line.substr(38,8);  // Convert string to float
+						string X = line.substr(30,8);  //
+						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
-						string residu = line.substr(17,3);
+						string residu = line.substr(17,3);  // Residu name (3 letters)
 						interm_tab.push_back(vector<string>(4));
 						i += 1;
-						interm_tab[i][0] = X;  //
-						interm_tab[i][1] = Y;  // Atomic coordinates x, y, z
+						interm_tab[i][0] = X;  // Stock the coordinates and residu name
+						interm_tab[i][1] = Y;  // in an intermediate vector 
 						interm_tab[i][2] = Z;  //
 						interm_tab[i][3] = residu;
 					}
 				}else {
 					tab_chain.push_back(line.substr(21,1));       // Chain changing
-					if (!interm_tab.empty())              //
-					{                                     // Avoid to stock an empty vector if the 
-						tableau.push_back(interm_tab);    // first chain is not "A"
-						interm_tab.clear();               //
+					if (!interm_tab.empty())             // Avoid to stock an empty vector if the
+					{                                    // first chain is not "A"
+						tableau.push_back(interm_tab);   // Otherwise stock atomis coordinates of
+						interm_tab.clear();              // previous chain in the main vector
 					}
 					i = -1;
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
 						string X = line.substr(30,8);  //
-						string Y = line.substr(38,8);  // Convert string to float
+						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
 						string residu = line.substr(17,3);
 						interm_tab.push_back(vector<string>(4));
 						i += 1;
 						interm_tab[i][0] = X;  //
-						interm_tab[i][1] = Y;  // Atomic coordinates x, y, z
+						interm_tab[i][1] = Y;  // Stocking coordinates in an intermediate vector
 						interm_tab[i][2] = Z;  //
 						interm_tab[i][3] = residu;
 					}
@@ -69,8 +69,8 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 			}		
 		}
 	}
-	if (!interm_tab.empty())             //
-	{                                    // Stock atomic coordinates for the last chain
+	if (!interm_tab.empty())             // Stock atomic coordinates for the last chain
+	{                                    // in the main vector
 		tableau.push_back(interm_tab);   //
 	}
 	return tableau;
@@ -117,14 +117,14 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
     vector<float> vecteur_normal1 = vector_prod(vecteur12, vecteur23);
     vector<float> vecteur_normal2 = vector_prod(vecteur23, vecteur34);
 
-    if (scalar_prod(vecteur23,vector_prod(vecteur_normal1,vecteur_normal2))<0)  // To know if value will be '-' or '+'
+    if (scalar_prod(vecteur23,vector_prod(vecteur_normal1,vecteur_normal2))<0)  // Know if sign of the value will be '+' or '-'
     {
 	    float angle = acos(scalar_prod(vecteur_normal1,vecteur_normal2)/
-	    	          (norme(vecteur_normal1)*norme(vecteur_normal2)))*180/M_PI;
+	    	          (norme(vecteur_normal1)*norme(vecteur_normal2)))*180/M_PI; // Formula to calculate a torsion angle ]0;180°]
 	    return angle;
     } else {
     	float angle = -acos(scalar_prod(vecteur_normal1,vecteur_normal2)/
-	    	          (norme(vecteur_normal1)*norme(vecteur_normal2)))*180/M_PI;
+	    	          (norme(vecteur_normal1)*norme(vecteur_normal2)))*180/M_PI; // [-180°;0[
     	return angle;
     }   
 }
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 {
 	string in_dir = argv[1];      // Pathway of the repository
 
-	/* Processing for each file in PDB files list */
+	/**** Processing for each file in PDB files list ****/
 
 	ifstream my_pdbs(argv[2]);    // File containing PDB files list
 	string line;
