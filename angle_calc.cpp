@@ -65,7 +65,10 @@ vector<vector<vector<float> >> coord_pdb(string pdbfile){
 			}		
 		}
 	}
-	tableau.push_back(interm_tab);    // Stock atomic coordinates for the last chain
+	if (!interm_tab.empty())             //
+	{                                    // Stock atomic coordinates for the last chain
+		tableau.push_back(interm_tab);   //
+	}
 	return tableau;
 }
 
@@ -149,6 +152,7 @@ int main(int argc, char** argv)
 			for (int k = 0; k < Coords.size(); k++)
 			{
 		        file_out << "Chain " << k+1 << endl;
+				cout << "Chain " << k+1 << endl;
 				for (int i = 0; i < Coords[k].size()-6; i+=3)
 				{
 					int j = i+2;
