@@ -33,16 +33,20 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 				{
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						string X = line.substr(30,8);  //
-						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
-						string Z = line.substr(46,8);  //
 						string residu = line.substr(17,3);  // Residu name (3 letters)
-						interm_tab.push_back(vector<string>(4));
-						i += 1;
-						interm_tab[i][0] = X;  // Stock the coordinates and residu name
-						interm_tab[i][1] = Y;  // in an intermediate vector 
-						interm_tab[i][2] = Z;  //
-						interm_tab[i][3] = residu;
+						if ((line.substr(16,4) == " "+residu)  || (line.substr(16,4) == "A"+residu))
+						{
+							string X = line.substr(30,8);  //
+							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
+							string Z = line.substr(46,8);  //
+							interm_tab.push_back(vector<string>(5));
+							i += 1;
+							interm_tab[i][0] = X;      // 
+							interm_tab[i][1] = Y;      // Stock the coordinates, residu name
+							interm_tab[i][2] = Z;      // and atom in an intermediate vector
+							interm_tab[i][3] = line.substr(16,1)+residu; //
+							interm_tab[i][4] = Atom;   //
+						}
 					}
 				}else {
 					tab_chain.push_back(line.substr(21,1));       // Chain changing
@@ -52,18 +56,21 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 						interm_tab.clear();              // previous chain in the main vector
 					}
 					i = -1;
-					if (*find(refer.begin(), refer.end(), Atom) == Atom)
+					if (refer.front() == Atom)
 					{
 						string X = line.substr(30,8);  //
 						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
 						string residu = line.substr(17,3);
-						interm_tab.push_back(vector<string>(4));
+						interm_tab.push_back(vector<string>(5));
 						i += 1;
-						interm_tab[i][0] = X;  //
-						interm_tab[i][1] = Y;  // Stocking coordinates in an intermediate vector
-						interm_tab[i][2] = Z;  //
-						interm_tab[i][3] = residu;
+						interm_tab[i][0] = X;      // 
+						interm_tab[i][1] = Y;      // Stock the coordinates, residu name
+						interm_tab[i][2] = Z;      // and atom in an intermediate vector
+						interm_tab[i][3] = line.substr(16,1)+residu; //
+						interm_tab[i][4] = Atom;   //
+					} else {
+						tab_atom.clear();
 					}
 				}
 			}		
@@ -159,10 +166,24 @@ int main(int argc, char** argv)
 				cout << "Chain " << k+1 << endl;
 				for (int i = 0; i < Coords[k].size()-5; i+=3)
 				{
-					int j = i+2;
-					float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
-					float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
-					file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+					string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4];
+					if (order == "N CAC ")
+					{
+						int j = i+2;
+						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
+						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+					}else if (order == "N C CA")
+					{
+						int j = i+1;
+						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
+						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-N-CA-C
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+					}else {
+						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone 
+						string angle_phi = "  NA  ";    // are not referenced in a common way 
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+					}
 				}
 			}
 		}
