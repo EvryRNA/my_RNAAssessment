@@ -1,11 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <dirent.h>
-#include <cstring>
+#include <map>      // for dictionary
+#include <cstring>  // stof()
 #include <vector>
 #include <cmath>
-#include <algorithm>
+#include <algorithm> // find()
 
 using namespace std;
 
@@ -17,7 +17,8 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
-	const vector<string> refer = {"N ","CA","C "};  // Atoms that interest us
+	float occupancy;
+	const vector<string> refer = {"N ","CA","C "};  // Atoms that interest us (P and C4' for RNA)
 	int i = -1;
 
 	ifstream fl(pdbfile);
@@ -39,20 +40,32 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 							string X = line.substr(30,8);  //
 							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 							string Z = line.substr(46,8);  //
+							occupancy = stof(line.substr(54,6));  // For residu alternate location (RAL)
 							interm_tab.push_back(vector<string>(5));
 							i += 1;
-							interm_tab[i][0] = X;      // 
-							interm_tab[i][1] = Y;      // Stock the coordinates, residu name
-							interm_tab[i][2] = Z;      // and atom in an intermediate vector
-							interm_tab[i][3] = line.substr(16,1)+residu; //
-							interm_tab[i][4] = Atom;   //
+							interm_tab[i][0] = X;       // 
+							interm_tab[i][1] = Y;       //
+							interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+							interm_tab[i][3] = residu;  // and atom in an intermediate vector
+							interm_tab[i][4] = Atom;    //
+						} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
+						{
+							string X = line.substr(30,8);  //
+							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
+							string Z = line.substr(46,8);  //
+							occupancy = stof(line.substr(54,6));  // For residu alternate location
+							interm_tab[i][0] = X;       // 
+							interm_tab[i][1] = Y;       //
+							interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+							interm_tab[i][3] = residu;  // and atom in an intermediate vector
+							interm_tab[i][4] = Atom;    //
 						}
 					}
 				}else {
 					tab_chain.push_back(line.substr(21,1));       // Chain changing
 					if (!interm_tab.empty())             // Avoid to stock an empty vector if the
 					{                                    // first chain is not "A"
-						tableau.push_back(interm_tab);   // Otherwise stock atomis coordinates of
+						tableau.push_back(interm_tab);   // Otherwise stock atomic coordinates of
 						interm_tab.clear();              // previous chain in the main vector
 					}
 					i = -1;
@@ -61,14 +74,15 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 						string X = line.substr(30,8);  //
 						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
-						string residu = line.substr(17,3);
+						string residu = line.substr(17,3);  // Residu name (3 letters)
+						occupancy = stof(line.substr(54,6));  // For residu alternate location
 						interm_tab.push_back(vector<string>(5));
 						i += 1;
-						interm_tab[i][0] = X;      // 
-						interm_tab[i][1] = Y;      // Stock the coordinates, residu name
-						interm_tab[i][2] = Z;      // and atom in an intermediate vector
-						interm_tab[i][3] = line.substr(16,1)+residu; //
-						interm_tab[i][4] = Atom;   //
+						interm_tab[i][0] = X;       // 
+						interm_tab[i][1] = Y;       //
+						interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+						interm_tab[i][3] = residu;  // and atom in an intermediate vector
+						interm_tab[i][4] = Atom;    //
 					} else {
 						tab_atom.clear();
 					}
@@ -117,9 +131,9 @@ float scalar_prod(vector<float> vect1, vector<float> vect2){
 
 // Return the torsion angle between atom2 and atom3
 float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> atom3, vector<string> atom4){
-	vector<float> vecteur12 = {stof(atom1[0])-stof(atom2[0]),stof(atom1[1])-stof(atom2[1]),stof(atom1[2])-stof(atom2[2])};
-    vector<float> vecteur23 = {stof(atom2[0])-stof(atom3[0]),stof(atom2[1])-stof(atom3[1]),stof(atom2[2])-stof(atom3[2])};
-    vector<float> vecteur34 = {stof(atom3[0])-stof(atom4[0]),stof(atom3[1])-stof(atom4[1]),stof(atom3[2])-stof(atom4[2])};
+	vector<float> vecteur12 = {stof(atom1[0])-stof(atom2[0]),stof(atom1[1])-stof(atom2[1]),stof(atom1[2])-stof(atom2[2])};  //
+    vector<float> vecteur23 = {stof(atom2[0])-stof(atom3[0]),stof(atom2[1])-stof(atom3[1]),stof(atom2[2])-stof(atom3[2])};  //  stof() : convert string to float
+    vector<float> vecteur34 = {stof(atom3[0])-stof(atom4[0]),stof(atom3[1])-stof(atom4[1]),stof(atom3[2])-stof(atom4[2])};  //
 
     vector<float> vecteur_normal1 = vector_prod(vecteur12, vecteur23);
     vector<float> vecteur_normal2 = vector_prod(vecteur23, vecteur34);
@@ -141,6 +155,11 @@ int main(int argc, char** argv)
 {
 	string in_dir = argv[1];      // Pathway of the repository
 
+	map<string,string> code3to1;
+	code3to1["ALA"]="A"; code3to1["CYS"]="C"; code3to1["ASP"]="D"; code3to1["GLU"]="E"; code3to1["PHE"]="F"; code3to1["GLY"]="G"; code3to1["HIS"]="H"; code3to1["ILE"]="I"; 
+	code3to1["LYS"]="K"; code3to1["LEU"]="L"; code3to1["MET"]="M"; code3to1["ASN"]="N"; code3to1["PRO"]="P"; code3to1["GLN"]="Q"; code3to1["ARG"]="R"; code3to1["SER"]="S"; 
+	code3to1["THR"]="T"; code3to1["VAL"]="V"; code3to1["TRP"]="W"; code3to1["TYR"]="Y";
+
 	/**** Processing for each file in PDB files list ****/
 
 	ifstream my_pdbs(argv[2]);    // File containing PDB files list
@@ -155,7 +174,7 @@ int main(int argc, char** argv)
 		
 		ofstream file_out;
 
-		Coords = coord_pdb(in_dir+fl);
+		Coords = coord_pdb(in_dir+fl);  // 3D vector {Chain[Atom[informations]]}
 
 		file_out.open(ffile);           // Open a new file for angle values
 		if (file_out.is_open())
@@ -172,17 +191,17 @@ int main(int argc, char** argv)
 						int j = i+2;
 						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
 						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
 					}else if (order == "N C CA")
 					{
 						int j = i+1;
-						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
-						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-N-CA-C
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-C-CA-N --> N-CA-C-N
+						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-CA-N-C --> C-N-CA-C
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
 					}else {
 						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone 
 						string angle_phi = "  NA  ";    // are not referenced in a common way 
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << Coords[k][i][3] << "-" << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
 					}
 				}
 			}
