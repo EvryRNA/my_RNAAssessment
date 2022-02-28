@@ -6,6 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm> // find()
+#include <getopt.h>
 
 using namespace std;
 
@@ -153,7 +154,22 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
 
 int main(int argc, char** argv)
 {
-	string in_dir = argv[1];      // Pathway of the repository
+	string in_dir;    // Pathway of the repository
+	string listpdb;   // File containing PDB files list
+	string output;    // Output file name without extension (".txt",".out",etc...)
+	bool Omega = false;   // Omega angle values are in option (default : false)
+
+	int opt;
+	while ((opt = getopt(argc,argv, "Od:l:o:")) != EOF){
+		switch(opt){
+			case 'd': in_dir = optarg; break;
+			case 'l': listpdb = optarg; break;
+			case 'o': output = optarg; break;
+			case 'O': Omega = true; break;
+		}
+	}
+
+	//string in_dir = argv[1];      // Pathway of the repository
 
 	map<string,string> code3to1;
 	code3to1["ALA"]="A"; code3to1["CYS"]="C"; code3to1["ASP"]="D"; code3to1["GLU"]="E"; code3to1["PHE"]="F"; code3to1["GLY"]="G"; code3to1["HIS"]="H"; code3to1["ILE"]="I"; 
@@ -162,15 +178,16 @@ int main(int argc, char** argv)
 
 	/**** Processing for each file in PDB files list ****/
 
-	ifstream my_pdbs(argv[2]);    // File containing PDB files list
+	ifstream my_pdbs(listpdb);    // File containing PDB files list //argv[2]
 	string line;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
+		bool pdbmistake = false;
 		string fl = line;
 		cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
-		string namef = argv[3];                   // Output file name without extension (".txt",".out",etc...)
-		string ffile = namef+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
+		//string namef = argv[3];                   // Output file name without extension (".txt",".out",etc...) 
+		string ffile = output+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
 		
 		ofstream file_out;
 
@@ -191,22 +208,41 @@ int main(int argc, char** argv)
 						int j = i+2;
 						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
 						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
-					}else if (order == "N C CA")
+						if (Omega)     // If user wants also the omega angle values
+						{
+							int a = i+1;
+							float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+1], Coords[k][a+2], Coords[k][a+3]);   // ATOM : CA-C-N-CA
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+						} else {
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}   // Residue concerned for each angle
+					} else if (order == "N C CA")
 					{
 						int j = i+1;
 						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-C-CA-N --> N-CA-C-N
 						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-CA-N-C --> C-N-CA-C
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
-					}else {
+						if (Omega)
+						{
+							int a = i+2;
+							float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+2], Coords[k][a+1], Coords[k][a+3]);   // ATOM : CA-N-C-CA --> CA-C-N-CA
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+						} else {
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+					} else {
+
 						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone 
-						string angle_phi = "  NA  ";    // are not referenced in a common way 
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;   // Residue concerned for each angle
+						string angle_phi = "  NA  ";    // are not referenced in a common way
+						pdbmistake = true;
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+						while(Coords[k][i][4] != "N "){
+							i += 1;}   // Try to go to another pair of residu with all their backbone atoms
 					}
 				}
 			}
 		}
-	cout << "Done !" << endl;
+	if (pdbmistake) {
+		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+	} else {
+	cout << "Done !" << endl;}
 	file_out.close();
 	}
 	return 0;
