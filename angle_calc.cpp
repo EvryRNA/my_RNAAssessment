@@ -35,18 +35,18 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 				{
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						string residu = line.substr(17,3);  // Residu name (3 letters)
-						if ((line.substr(16,4) == " "+residu)  || (line.substr(16,4) == "A"+residu))
+						string residu = line.substr(17,3);  // Residue name (3 letters)
+						if ((line.substr(16,4) == " "+residu)  || (line.substr(16,4) == "A"+residue))
 						{
 							string X = line.substr(30,8);  //
 							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 							string Z = line.substr(46,8);  //
-							occupancy = stof(line.substr(54,6));  // For residu alternate location (RAL)
+							occupancy = stof(line.substr(54,6));  // For residue alternate location (RAL)
 							interm_tab.push_back(vector<string>(5));
 							i += 1;
 							interm_tab[i][0] = X;       // 
 							interm_tab[i][1] = Y;       //
-							interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+							interm_tab[i][2] = Z;       // Stock the coordinates, residue name
 							interm_tab[i][3] = residu;  // and atom in an intermediate vector
 							interm_tab[i][4] = Atom;    //
 						} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
@@ -54,10 +54,10 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 							string X = line.substr(30,8);  //
 							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 							string Z = line.substr(46,8);  //
-							occupancy = stof(line.substr(54,6));  // For residu alternate location
+							occupancy = stof(line.substr(54,6));  // For residue alternate location
 							interm_tab[i][0] = X;       // 
 							interm_tab[i][1] = Y;       //
-							interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+							interm_tab[i][2] = Z;       // Stock the coordinates, residue name
 							interm_tab[i][3] = residu;  // and atom in an intermediate vector
 							interm_tab[i][4] = Atom;    //
 						}
@@ -75,13 +75,13 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 						string X = line.substr(30,8);  //
 						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
-						string residu = line.substr(17,3);  // Residu name (3 letters)
-						occupancy = stof(line.substr(54,6));  // For residu alternate location
+						string residu = line.substr(17,3);  // Residue name (3 letters)
+						occupancy = stof(line.substr(54,6));  // For residue alternate location
 						interm_tab.push_back(vector<string>(5));
 						i += 1;
 						interm_tab[i][0] = X;       // 
 						interm_tab[i][1] = Y;       //
-						interm_tab[i][2] = Z;       // Stock the coordinates, residu name
+						interm_tab[i][2] = Z;       // Stock the coordinates, residue name
 						interm_tab[i][3] = residu;  // and atom in an intermediate vector
 						interm_tab[i][4] = Atom;    //
 					} else {
@@ -169,8 +169,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	//string in_dir = argv[1];      // Pathway of the repository
-
 	map<string,string> code3to1;
 	code3to1["ALA"]="A"; code3to1["CYS"]="C"; code3to1["ASP"]="D"; code3to1["GLU"]="E"; code3to1["PHE"]="F"; code3to1["GLY"]="G"; code3to1["HIS"]="H"; code3to1["ILE"]="I"; 
 	code3to1["LYS"]="K"; code3to1["LEU"]="L"; code3to1["MET"]="M"; code3to1["ASN"]="N"; code3to1["PRO"]="P"; code3to1["GLN"]="Q"; code3to1["ARG"]="R"; code3to1["SER"]="S"; 
@@ -178,7 +176,7 @@ int main(int argc, char** argv)
 
 	/**** Processing for each file in PDB files list ****/
 
-	ifstream my_pdbs(listpdb);    // File containing PDB files list //argv[2]
+	ifstream my_pdbs(listpdb);
 	string line;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
@@ -186,7 +184,6 @@ int main(int argc, char** argv)
 		string fl = line;
 		cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
-		//string namef = argv[3];                   // Output file name without extension (".txt",".out",etc...) 
 		string ffile = output+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
 		
 		ofstream file_out;
@@ -202,8 +199,8 @@ int main(int argc, char** argv)
 				cout << "Chain " << k+1 << endl;
 				for (int i = 0; i < Coords[k].size()-5; i+=3)
 				{
-					string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4];
-					if (order == "N CAC ")
+					string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
+					if (order == "N CAC N ")
 					{
 						int j = i+2;
 						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
@@ -215,7 +212,7 @@ int main(int argc, char** argv)
 							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
 						} else {
 						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}   // Residue concerned for each angle
-					} else if (order == "N C CA")
+					} else if (order == "N C CAN ")
 					{
 						int j = i+1;
 						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-C-CA-N --> N-CA-C-N
@@ -229,12 +226,24 @@ int main(int argc, char** argv)
 						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
 					} else {
 
-						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone 
-						string angle_phi = "  NA  ";    // are not referenced in a common way
+						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone are 
+						string angle_phi = "  NA  ";    // not well referenced for 1 pair of residue
 						pdbmistake = true;
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
-						while(Coords[k][i][4] != "N "){
-							i += 1;}   // Try to go to another pair of residu with all their backbone atoms
+						if (Omega)
+						{
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+						} else {
+						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+						if (Coords[k][i+1][4] == "N ")         //
+						{                                      //
+							i -= 2;                            //
+						} else if (Coords[k][i+2][4] == "N ")  // Try to find another pair of residue
+						{                                      // with all their backbone atoms for the
+							i -= 1;                            // next step
+						} else {                               //
+						while(Coords[k][i+3][4] != "N "){      //
+							i += 1;}                           //
+						}
 					}
 				}
 			}
