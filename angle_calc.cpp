@@ -6,7 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm> // find()
-#include <getopt.h>
+#include <getopt.h>  // add options
 
 using namespace std;
 
@@ -27,7 +27,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 		refer = {"N ","CA","C "};  // Atoms that interest us (P and C4' for RNA)
 		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
 	} else {
-		refer = {"P  ","C4'"};
+		refer = {"P  ","C4'","C1'"};
 		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
 	}
 	
@@ -168,16 +168,21 @@ int main(int argc, char** argv)
 	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
 	bool Omega = false;   // Omega angle values are in option (default : false)
-	bool Rna = false;
+	bool Rna = false;     // Turn on RNA mode for pseudotorsion angles (default : protein psi-phi)
+	bool alterC4 = true;  // Only pseudotorsion angles with C4' (RNA)
+	bool alterC1 = false;  // Only pseudotorsion angles with C1' (RNA)
+	bool C4andC1 = false;  // Pseudotorsion angles with C4' and C1' (RNA)
 
 	int opt;
-	while ((opt = getopt(argc,argv, "ORd:l:o:")) != EOF){
+	while ((opt = getopt(argc,argv, "ORaAd:l:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
 			case 'l': listpdb = optarg; break;
 			case 'o': output = optarg; break;
 			case 'O': Omega = true; break;
 			case 'R': Rna = true; break;
+			case 'a': alterC4 = false; alterC1 = true; break;
+			case 'A': alterC4 = false; C4andC1 = true; break;
 		}
 	}
 
@@ -194,7 +199,7 @@ int main(int argc, char** argv)
 	string line;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
-		bool pdbmistake = false;
+		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
 		cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
@@ -214,62 +219,68 @@ int main(int argc, char** argv)
 		{
 			for (int k = 0; k < Coords.size(); k++)
 			{
-		        file_out << "Chain " << k+1 << endl;
-				cout << "Chain " << k+1 << endl;
-				for (int i = 0; i < Coords[k].size()-5; i+=3)
+				if (Coords[k].size() >= 5)
 				{
-					string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
-					if (order == "N CAC N ")
+				    file_out << "Chain " << k+1 << endl;
+					cout << "Chain " << k+1 << endl;
+					for (int i = 0; i < Coords[k].size()-5; i+=3)
 					{
-						int j = i+2;
-						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
-						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
-						if (Omega)     // If user wants also the omega angle values
+						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
+						if (order == "N CAC N ")
 						{
-							int a = i+1;
-							float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+1], Coords[k][a+2], Coords[k][a+3]);   // ATOM : CA-C-N-CA
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
-						} else {
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}   // Residue concerned for each angle
-					} else if (order == "N C CAN ")
-					{
-						int j = i+1;
-						float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-C-CA-N --> N-CA-C-N
-						float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-CA-N-C --> C-N-CA-C
-						if (Omega)
+							int j = i+2;
+							float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : N-CA-C-N 
+							float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C-N-CA-C
+							if (Omega)     // If user wants also the omega angle values
+							{
+								int a = i+1;
+								float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+1], Coords[k][a+2], Coords[k][a+3]);   // ATOM : CA-C-N-CA
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+							} else {
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}   // Residue concerned for each angle
+						} else if (order == "N C CAN ")
 						{
-							int a = i+2;
-							float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+2], Coords[k][a+1], Coords[k][a+3]);   // ATOM : CA-N-C-CA --> CA-C-N-CA
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+							int j = i+1;
+							float angle_psi = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : N-C-CA-N --> N-CA-C-N
+							float angle_phi = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C-CA-N-C --> C-N-CA-C
+							if (Omega)
+							{
+								int a = i+2;
+								float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+2], Coords[k][a+1], Coords[k][a+3]);   // ATOM : CA-N-C-CA --> CA-C-N-CA
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+							} else {
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
 						} else {
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
-					} else {
 
-						string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone are 
-						string angle_phi = "  NA  ";    // not well referenced for 1 pair of residue
-						pdbmistake = true;
-						if (Omega)
-						{
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
-						} else {
-						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
-						
-						if (Coords[k][i+1][4] == "N ")         //
-						{                                      //
-							i -= 2;                            //
-						} else if (Coords[k][i+2][4] == "N ")  // Try to find another pair of residue
-						{                                      // with all their backbone atoms for the
-							i -= 1;                            // next step
-						} else {                               //
-						while(Coords[k][i+3][4] != "N "){      //
-							i += 1;}                           //
+							string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone are 
+							string angle_phi = "  NA  ";    // not well referenced for 1 pair of residue
+							pdbmistake = true;
+							if (Omega)
+							{
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+							} else {
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+							
+							if (Coords[k][i+1][4] == "N ")         //
+							{                                      //
+								i -= 2;                            //
+							} else if (Coords[k][i+2][4] == "N ")  // Try to find another pair of residue
+							{                                      // with all their backbone atoms for the
+								i -= 1;                            // next step
+							} else {                               //
+							while(Coords[k][i+3][4] != "N "){      //
+								i += 1;}                           //
+							}
 						}
 					}
-				}
+				} else {
+				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
 			}
 		}
 	if (pdbmistake) {
 		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+	} else if (cutoff) {
+		cerr << "\nError (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
 	} else {
 	cout << "Done !" << endl;}
 	file_out.close();}
@@ -285,7 +296,7 @@ int main(int argc, char** argv)
 	string line;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
-		bool pdbmistake = false; bool tooshort = false;
+		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
 		cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
@@ -309,43 +320,77 @@ int main(int argc, char** argv)
 				{
 				    file_out << "Chain " << k+1 << endl;
 					cout << "Chain " << k+1 << endl;
-					for (int i = 0; i < Coords[k].size()-4; i+=2)
+					for (int i = 0; i < Coords[k].size()-6; i+=3)
 					{
-						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
-						if (order == "P  C4'P  C4'")
+						string order1 = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+3][4]+Coords[k][i+4][4];
+						string order2 = Coords[k][i][4]+Coords[k][i+2][4]+Coords[k][i+3][4]+Coords[k][i+5][4];
+						if ((order1 == "P  C4'P  C4'") && (alterC4))
 						{
 							int j = i+1;
-							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : P-C4'-P-C4' 
-							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C4'-P-C4'-P
+							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4]);    // ATOMS : P-C4'-P-C4' 
+							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+3], Coords[k][j+5]);    // ATOMS : C4'-P-C4'-P
 							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
-						} else if (order == "P  C1'P  C1'") // /!\ à revoir 
+						} else if ((order2 == "P  C1'P  C1'") && (alterC1)) 
 						{
-							int j = i+1;
-							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : P-C1'-P-C1'
-							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C1'-P-C1'-P
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+							int j = i+2;
+							float angle_thetaP = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]);    // ATOMS : P-C1'-P-C1'
+							float angle_etaP = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+3], Coords[k][j+4]);    // ATOMS : C1'-P-C1'-P
+							file_out << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+						} else if (C4andC1)
+						{
+							if ((order1 == "P  C4'P  C4'") && (order2 == "P  C1'P  C1'"))
+							{
+								int j1 = i+1;
+								float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4]);    // ATOMS : P-C4'-P-C4' 
+								float angle_eta = torsion_angle(Coords[k][j1], Coords[k][j1+2], Coords[k][j1+3], Coords[k][j1+5]);  // ATOMS : C4'-P-C4'-P
+								int j2 = i+2;
+								float angle_thetaP = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]);    // ATOMS : P-C1'-P-C1'
+								float angle_etaP = torsion_angle(Coords[k][j2], Coords[k][j2+1], Coords[k][j2+3], Coords[k][j2+4]);  // ATOMS : C1'-P-C1'-P
+								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+							} else {
+								string angle_theta = "  NA  ";   // 
+								string angle_eta = "  NA  ";     // Returns NA if the atoms in the backbone are
+								string angle_thetaP = "  NA  ";  // not well referenced for 1 pair of residue
+								string angle_etaP = "  NA  ";    //
+								pdbmistake = true;
+								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+								
+								if (Coords[k][i+1][4] == "P  ")        //
+								{                                      //
+									i -= 2;                            //
+								} else if (Coords[k][i+2][4] == "P  ") // Try to find another pair of residue
+								{                                      // with all their backbone atoms for the
+									i -= 1;                            // next step
+								} else {                               //
+								while(Coords[k][i+3][4] != "P  "){     //
+									i += 1;}                           //
+								}
+							}
 						} else {
 							string angle_theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
 							string angle_eta = "  NA  ";    // not well referenced for 1 pair of residue
 							pdbmistake = true;
 							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
 							
-							if (Coords[k][i+1][4] == "P  ")      //
-							{                                    //
-								i -= 1;                          // Try to find another pair of residue with all
-							} else {                             // their backbone atoms for the next step
-							while(Coords[k][i+2][4] != "P  "){   //
-								i += 1;}                         //
+							if (Coords[k][i+1][4] == "P  ")        //
+							{                                      //
+								i -= 2;                            //
+							} else if (Coords[k][i+2][4] == "P  ") // Try to find another pair of residue
+							{                                      // with all their backbone atoms for the
+								i -= 1;                            // next step
+							} else {                               //
+							while(Coords[k][i+3][4] != "P  "){     //
+								i += 1;}                           //
 							}	
 						}
 					}
 				} else {
-				tooshort = true;}  // Check the length of the sequence, return an error if it is under the cutoff
+				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
 			}
 		}
 	if (pdbmistake) {
 		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
-	} else if (tooshort) {
+	} else if (cutoff) {
 		cerr << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
 	} else {
 	cout << "Done !" << endl;}
