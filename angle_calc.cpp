@@ -11,21 +11,31 @@
 using namespace std;
 
 /**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
-vector<vector<vector<string> >> coord_pdb(string pdbfile){
+vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
 	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
 	vector<string> tab_atom;
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
+	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters for protein
 	float occupancy;
-	const vector<string> refer = {"N ","CA","C "};  // Atoms that interest us (P and C4' for RNA)
+	vector<string> refer;  // Atoms that interest us (P and C4' for RNA)
 	int i = -1;
+
+	if (!rna){
+		refer = {"N ","CA","C "};  // Atoms that interest us (P and C4' for RNA)
+		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+	} else {
+		refer = {"P  ","C4'"};
+		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+	}
+	
 
 	ifstream fl(pdbfile);
 	while(getline(fl, line)){
 		if (line.substr(0,4) == "ATOM"){
-			Atom = line.substr(13,2);
+			Atom = line.substr(13,plc1);
 			tab_atom.push_back(Atom);               //
 			if (tab_atom.front() != refer.front())  // Avoids possible mismatches if the N-ter part
 			{                                       // is missing from the PDB file 
@@ -35,8 +45,8 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 				{
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
-						string residu = line.substr(17,3);  // Residue name (3 letters)
-						if ((line.substr(16,4) == " "+residu)  || (line.substr(16,4) == "A"+residue))
+						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
+						if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
 						{
 							string X = line.substr(30,8);  //
 							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
@@ -75,7 +85,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile){
 						string X = line.substr(30,8);  //
 						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
 						string Z = line.substr(46,8);  //
-						string residu = line.substr(17,3);  // Residue name (3 letters)
+						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 						occupancy = stof(line.substr(54,6));  // For residue alternate location
 						interm_tab.push_back(vector<string>(5));
 						i += 1;
@@ -158,17 +168,21 @@ int main(int argc, char** argv)
 	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
 	bool Omega = false;   // Omega angle values are in option (default : false)
+	bool Rna = false;
 
 	int opt;
-	while ((opt = getopt(argc,argv, "Od:l:o:")) != EOF){
+	while ((opt = getopt(argc,argv, "ORd:l:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
 			case 'l': listpdb = optarg; break;
 			case 'o': output = optarg; break;
 			case 'O': Omega = true; break;
+			case 'R': Rna = true; break;
 		}
 	}
 
+	if (!Rna)
+	{
 	map<string,string> code3to1;
 	code3to1["ALA"]="A"; code3to1["CYS"]="C"; code3to1["ASP"]="D"; code3to1["GLU"]="E"; code3to1["PHE"]="F"; code3to1["GLY"]="G"; code3to1["HIS"]="H"; code3to1["ILE"]="I"; 
 	code3to1["LYS"]="K"; code3to1["LEU"]="L"; code3to1["MET"]="M"; code3to1["ASN"]="N"; code3to1["PRO"]="P"; code3to1["GLN"]="Q"; code3to1["ARG"]="R"; code3to1["SER"]="S"; 
@@ -189,6 +203,11 @@ int main(int argc, char** argv)
 		ofstream file_out;
 
 		Coords = coord_pdb(in_dir+fl);  // 3D vector {Chain[Atom[informations]]}
+
+		if (Coords.empty())
+		{
+			cerr << "There is no protein sequence in this PDB file\n" << endl;
+		} else {
 
 		file_out.open(ffile);           // Open a new file for angle values
 		if (file_out.is_open())
@@ -234,6 +253,7 @@ int main(int argc, char** argv)
 							file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
 						} else {
 						file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+						
 						if (Coords[k][i+1][4] == "N ")         //
 						{                                      //
 							i -= 2;                            //
@@ -252,7 +272,85 @@ int main(int argc, char** argv)
 		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else {
 	cout << "Done !" << endl;}
-	file_out.close();
+	file_out.close();}
 	}
-	return 0;
+	return 0;}
+
+
+	else {   /* If you want to work with RNA sequences */
+
+	/**** Processing for each file in PDB files list for RNA structures****/
+
+	ifstream my_pdbs(listpdb);
+	string line;
+	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
+	{
+		bool pdbmistake = false; bool tooshort = false;
+		string fl = line;
+		cout << fl << endl;
+		vector<vector<vector<string> >> Coords;
+		string ffile = output+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
+		
+		ofstream file_out;
+
+		Coords = coord_pdb(in_dir+fl, true);  // 3D vector {Chain[Atom[informations]]}
+
+		if (Coords.empty())
+		{
+			cerr << "There is no RNA sequence in this PDB file\n" << endl;
+		} else {
+
+		file_out.open(ffile);           // Open a new file for angle values
+		if (file_out.is_open())
+		{
+			for (int k = 0; k < Coords.size(); k++)
+			{
+				if (Coords[k].size() >= 5)
+				{
+				    file_out << "Chain " << k+1 << endl;
+					cout << "Chain " << k+1 << endl;
+					for (int i = 0; i < Coords[k].size()-4; i+=2)
+					{
+						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
+						if (order == "P  C4'P  C4'")
+						{
+							int j = i+1;
+							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3]);    // ATOMS : P-C4'-P-C4' 
+							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3]);    // ATOMS : C4'-P-C4'-P
+							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+						} else if (order == "P  C1'P  C1'") // /!\ à revoir 
+						{
+							int j = i+1;
+							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3]);    // ATOMS : P-C1'-P-C1'
+							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3]);    // ATOMS : C1'-P-C1'-P
+							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+						} else {
+							string angle_theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
+							string angle_eta = "  NA  ";    // not well referenced for 1 pair of residue
+							pdbmistake = true;
+							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+							
+							if (Coords[k][i+1][4] == "P  ")      //
+							{                                    //
+								i -= 1;                          // Try to find another pair of residue with all
+							} else {                             // their backbone atoms for the next step
+							while(Coords[k][i+2][4] != "P  "){   //
+								i += 1;}                         //
+							}	
+						}
+					}
+				} else {
+				tooshort = true;}  // Check the length of the sequence, return an error if it is under the cutoff
+			}
+		}
+	if (pdbmistake) {
+		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+	} else if (tooshort) {
+		cerr << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
+	} else {
+	cout << "Done !" << endl;}
+	file_out.close();
+		}
+	}
+	return 0;}
 }
