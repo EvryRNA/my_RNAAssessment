@@ -164,6 +164,24 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
 
 int main(int argc, char** argv)
 {
+	string optlist =
+		"   Usage:\n"
+		"   ./angle_calc [-d INPUT_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R]\n"
+		"                [-a|-A]\n\n"
+		"   Options:\n"
+		"   -d   string   Repository where PDB files you interested of are\n"
+		"   -l   string   List of all PDB files you want to be processed\n"
+		"   -o   string   Name of your files in output (ex.: YourOuputName_pdbcode.txt). The\n"
+		"                 'pdbcode' of the files processed are automatically add to the output\n"
+		"                 file name that you chose\n"
+		"   -O            Add Omega angles values to those of Psi and Phi angles\n\n"
+		"   Access to the RNA processing mode and its options:\n"
+		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and\n"
+		"                 C4')\n"
+		"   -a            Alternative calculation with atoms P and C1'\n"
+		"   -A            Calculation of pseudotorsion angles using both methods\n\n"
+		"   -h            Help\n\n";
+
 	string in_dir;    // Pathway of the repository
 	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
@@ -174,7 +192,7 @@ int main(int argc, char** argv)
 	bool C4andC1 = false;  // Pseudotorsion angles with C4' and C1' (RNA)
 
 	int opt;
-	while ((opt = getopt(argc,argv, "ORaAd:l:o:")) != EOF){
+	while ((opt = getopt(argc,argv, "hORaAd:l:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
 			case 'l': listpdb = optarg; break;
@@ -183,6 +201,7 @@ int main(int argc, char** argv)
 			case 'R': Rna = true; break;
 			case 'a': alterC4 = false; alterC1 = true; break;
 			case 'A': alterC4 = false; C4andC1 = true; break;
+			case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
 		}
 	}
 
