@@ -166,18 +166,17 @@ int main(int argc, char** argv)
 {
 	string optlist =
 		"   Usage:\n"
-		"   ./angle_calc [-d INPUT_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R]\n"
+		"   ./angle_calc [-d PATHWAY_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R]\n"
 		"                [-a|-A]\n\n"
 		"   Options:\n"
 		"   -d   string   Repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
 		"   -o   string   Name of your files in output (ex.: YourOuputName_pdbcode.txt). The\n"
-		"                 'pdbcode' of the files processed are automatically add to the output\n"
-		"                 file name that you chose\n"
+		"                 'pdbcode' of the files processed are automatically add to the output file\n"
+		"                 name that you chose\n"
 		"   -O            Add Omega angles values to those of Psi and Phi angles\n\n"
 		"   Access to the RNA processing mode and its options:\n"
-		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and\n"
-		"                 C4')\n"
+		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and C4')\n"
 		"   -a            Alternative calculation with atoms P and C1'\n"
 		"   -A            Calculation of pseudotorsion angles using both methods\n\n"
 		"   -h            Help\n\n";
@@ -206,9 +205,10 @@ int main(int argc, char** argv)
 	}
 
 	if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
+	if (listpdb.empty() and output.empty()){ cerr << "Error (argument) : Missing -l and -o arguments\n" << endl; return 1;}
 	if (listpdb.empty()){ cerr << "Error (argument) : Missing -l argument\n" << endl; return 1;}
 	if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
-	if (Rna and Omega){ cerr << "Error (option) : There is no omega angle [-O] in RNA structure\n" << endl; return 1;}
+	if (Rna and Omega){ cerr << "Error (option) : There is no omega pseudotorsion angle [-O] in RNA structure\n" << endl; return 1;}
 	if (!Rna and alterC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-a]\n" << endl; return 1;}
 	if (!Rna and C4andC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-A]\n" << endl; return 1;}
 	if (check_a and check_A){ cerr << "Error (option) : -a and -A are incompatible options\n" << endl; return 1;}
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "There is no protein sequence in this PDB file\n" << endl;
+			cerr << "Error: There is no protein sequence in this PDB file\n" << endl;
 		} else {
 
 		file_out.open(ffile);           // Open a new file for angle values
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
 			}
 		}
 	if (pdbmistake) {
-		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cerr << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
 		cerr << "\nError (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
 	} else {
@@ -317,7 +317,7 @@ int main(int argc, char** argv)
 
 	else {   /* If you want to work with RNA sequences */
 
-	/**** Processing for each file in PDB files list for RNA structures****/
+	/**** Processing for each file in PDB files list for RNA structures ****/
 
 	ifstream my_pdbs(listpdb);
 	string line;
@@ -335,7 +335,7 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "There is no RNA sequence in this PDB file\n" << endl;
+			cerr << "Error: There is no RNA sequence in this PDB file\n" << endl;
 		} else {
 
 		file_out.open(ffile);           // Open a new file for angle values
@@ -416,7 +416,7 @@ int main(int argc, char** argv)
 			}
 		}
 	if (pdbmistake) {
-		cerr << "\nError: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cerr << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
 		cerr << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
 	} else {
