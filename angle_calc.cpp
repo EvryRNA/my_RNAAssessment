@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 		{
 			for (int k = 0; k < Coords.size(); k++)
 			{
-				if (Coords[k].size() >= 5)
+				if (Coords[k].size() >= 6)
 				{
 				    file_out << "Chain " << k+1 << endl;
 					cout << "Chain " << k+1 << endl;
