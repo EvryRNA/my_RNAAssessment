@@ -188,8 +188,8 @@ int main(int argc, char** argv)
 	bool Omega = false;   // Omega angle values are in option (default : false)
 	bool Rna = false;     // Turn on RNA mode for pseudotorsion angles (default : protein psi-phi)
 	bool alterC4 = true;  // Only pseudotorsion angles with C4' (RNA)
-	bool alterC1 = false;  // Only pseudotorsion angles with C1' (RNA)
-	bool C4andC1 = false;  // Pseudotorsion angles with C4' and C1' (RNA)
+	bool alterC1 = false; bool check_a = false;  // Only pseudotorsion angles with C1' (RNA)
+	bool C4andC1 = false; bool check_A = false;  // Pseudotorsion angles with C4' and C1' (RNA)
 
 	int opt;
 	while ((opt = getopt(argc,argv, "hORaAd:l:o:")) != EOF){
@@ -199,11 +199,19 @@ int main(int argc, char** argv)
 			case 'o': output = optarg; break;
 			case 'O': Omega = true; break;
 			case 'R': Rna = true; break;
-			case 'a': alterC4 = false; alterC1 = true; break;
-			case 'A': alterC4 = false; C4andC1 = true; break;
+			case 'a': alterC4 = false; alterC1 = true; check_a = true; break;
+			case 'A': alterC4 = false; C4andC1 = true; check_A = true; break;
 			case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
 		}
 	}
+
+	if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
+	if (listpdb.empty()){ cerr << "Error (argument) : Missing -l argument\n" << endl; return 1;}
+	if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
+	if (Rna and Omega){ cerr << "Error (option) : There is no omega angle [-O] in RNA structure\n" << endl; return 1;}
+	if (!Rna and alterC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-a]\n" << endl; return 1;}
+	if (!Rna and C4andC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-A]\n" << endl; return 1;}
+	if (check_a and check_A){ cerr << "Error (option) : -a and -A are incompatible options\n" << endl; return 1;}
 
 	if (!Rna)
 	{
