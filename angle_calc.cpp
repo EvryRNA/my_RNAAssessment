@@ -17,12 +17,66 @@ void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, str
 	occup = stof(lines.substr(54,6));  // For residue alternate location (RAL)
 	if (nx_step){xyz.push_back(vector<string>(5));
 	iter += 1;}
-	xyz[iter][0] = X;         // 
-	xyz[iter][1] = Y;         //
-	xyz[iter][2] = Z;         // Stock the coordinates, residue name
+	xyz[iter][0] = X;        // 
+	xyz[iter][1] = Y;        //
+	xyz[iter][2] = Z;        // Stock the coordinates, residue name
 	xyz[iter][3] = residus;  // and atom in an intermediate vector
 	xyz[iter][4] = atoms;    //
 }
+
+
+vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool rna = false){
+	vector<vector<vector<string> >> tableau;         // Atomic coordinates ('main' dimension)
+	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
+	vector<string> tab_atom;
+	string line;
+	string Atom;
+	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
+	float occupancy;
+	vector<string> refer;  // Atoms that interest us
+	int i = -1;
+
+	if (!rna){
+		refer = {"N ","CA","C "};  // P and C4' for RNA
+		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+	} else {
+		refer = {"P  ","C4'","C1'"};
+		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+	}
+	
+	ifstream fl(pdbfile);
+	while(getline(fl, line)){
+		if (line.substr(0,4) == "ATOM"){
+			if (chain == line.substr(21,1))  // Chain selected
+			{
+				Atom = line.substr(13,plc1);
+				tab_atom.push_back(Atom);               //
+				if (tab_atom.front() != refer.front())  // Avoids possible mismatches if the N-ter part
+				{                                       // is missing from the PDB file 
+					tab_atom.pop_back();                //
+				} else {
+					if (*find(refer.begin(), refer.end(), Atom) == Atom)
+						{
+							string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
+							if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
+							{
+								add_coords(interm_tab, line, residu, Atom, occupancy, i);
+							} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
+							{
+								add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
+							}
+						}
+					}
+				}
+			}
+		}
+	if (!interm_tab.empty())             // Stock atomic coordinates for the last chain
+	{                                    // in the main vector
+		tableau.push_back(interm_tab);   //
+	}
+	return tableau;
+	}
+
 
 /**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
 vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
@@ -32,13 +86,13 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
-	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters for protein
+	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
 	float occupancy;
-	vector<string> refer;  // Atoms that interest us (P and C4' for RNA)
+	vector<string> refer;  // Atoms that interest us
 	int i = -1;
 
 	if (!rna){
-		refer = {"N ","CA","C "};  // Atoms that interest us (P and C4' for RNA)
+		refer = {"N ","CA","C "};  // P and C4' for RNA
 		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
 	} else {
 		refer = {"P  ","C4'","C1'"};
@@ -220,7 +274,11 @@ int main(int argc, char** argv)
 		
 		ofstream file_out;
 
-		Coords = coord_pdb(in_dir+fl);  // 3D vector {Chain[Atom[informations]]}
+		if (fl.size() == 9)
+		{
+			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
+		} else {
+			Coords = coord_pdb(in_dir+fl);}  // 3D vector {Chain[Atom[informations]]}
 
 		if (Coords.empty())
 		{
@@ -317,7 +375,11 @@ int main(int argc, char** argv)
 		
 		ofstream file_out;
 
-		Coords = coord_pdb(in_dir+fl, true);  // 3D vector {Chain[Atom[informations]]}
+		if (fl.size() == 9)
+		{
+			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), true);
+		} else {
+			Coords = coord_pdb(in_dir+fl, true);}  // 3D vector {Chain[Atom[informations]]}
 
 		if (Coords.empty())
 		{
