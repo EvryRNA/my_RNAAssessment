@@ -10,6 +10,20 @@
 
 using namespace std;
 
+void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, string &atoms, float &occup, int &iter, bool nx_step = true){
+	string X = lines.substr(30,8);  //
+	string Y = lines.substr(38,8);  // Atomic coordinates x, y, z
+	string Z = lines.substr(46,8);  //
+	occup = stof(lines.substr(54,6));  // For residue alternate location (RAL)
+	if (nx_step){xyz.push_back(vector<string>(5));
+	iter += 1;}
+	xyz[iter][0] = X;         // 
+	xyz[iter][1] = Y;         //
+	xyz[iter][2] = Z;         // Stock the coordinates, residue name
+	xyz[iter][3] = residus;  // and atom in an intermediate vector
+	xyz[iter][4] = atoms;    //
+}
+
 /**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
 vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
@@ -48,28 +62,10 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 						if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
 						{
-							string X = line.substr(30,8);  //
-							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
-							string Z = line.substr(46,8);  //
-							occupancy = stof(line.substr(54,6));  // For residue alternate location (RAL)
-							interm_tab.push_back(vector<string>(5));
-							i += 1;
-							interm_tab[i][0] = X;       // 
-							interm_tab[i][1] = Y;       //
-							interm_tab[i][2] = Z;       // Stock the coordinates, residue name
-							interm_tab[i][3] = residu;  // and atom in an intermediate vector
-							interm_tab[i][4] = Atom;    //
+							add_coords(interm_tab, line, residu, Atom, occupancy, i);
 						} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
 						{
-							string X = line.substr(30,8);  //
-							string Y = line.substr(38,8);  // Atomic coordinates x, y, z
-							string Z = line.substr(46,8);  //
-							occupancy = stof(line.substr(54,6));  // For residue alternate location
-							interm_tab[i][0] = X;       // 
-							interm_tab[i][1] = Y;       //
-							interm_tab[i][2] = Z;       // Stock the coordinates, residue name
-							interm_tab[i][3] = residu;  // and atom in an intermediate vector
-							interm_tab[i][4] = Atom;    //
+							add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
 						}
 					}
 				}else {
@@ -82,18 +78,8 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 					i = -1;
 					if (refer.front() == Atom)
 					{
-						string X = line.substr(30,8);  //
-						string Y = line.substr(38,8);  // Atomic coordinates x, y, z
-						string Z = line.substr(46,8);  //
 						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-						occupancy = stof(line.substr(54,6));  // For residue alternate location
-						interm_tab.push_back(vector<string>(5));
-						i += 1;
-						interm_tab[i][0] = X;       // 
-						interm_tab[i][1] = Y;       //
-						interm_tab[i][2] = Z;       // Stock the coordinates, residue name
-						interm_tab[i][3] = residu;  // and atom in an intermediate vector
-						interm_tab[i][4] = Atom;    //
+						add_coords(interm_tab, line, residu, Atom, occupancy, i);
 					} else {
 						tab_atom.clear();
 					}
