@@ -300,7 +300,6 @@ int main(int argc, char** argv)
 			if (Omega){ head3 = "    \t OMEGA ";}
 			if (PosChain)
 			{
-				head_res = "        PAIR ";
 				head_pos = "     POSITION";
 				head_ch = "     CHAIN ";
 			}
@@ -424,7 +423,6 @@ int main(int argc, char** argv)
 			if (C4andC1){ head3 = "    \t THETA'"; head4 = "    \t  ETA' ";}
 			if (PosChain)
 			{
-				head_res = "        PAIR ";
 				head_pos = "     POSITION";
 				head_ch = "     CHAIN ";
 			}
