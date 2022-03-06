@@ -14,14 +14,18 @@ void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, str
 	string X = lines.substr(30,8);  //
 	string Y = lines.substr(38,8);  // Atomic coordinates x, y, z
 	string Z = lines.substr(46,8);  //
+	string pos = lines.substr(22,4);  // Residue position
+	string Chain = lines.substr(21,1);
 	occup = stof(lines.substr(54,6));  // For residue alternate location (RAL)
-	if (nx_step){xyz.push_back(vector<string>(5));
+	if (nx_step){xyz.push_back(vector<string>(7));
 	iter += 1;}
 	xyz[iter][0] = X;        // 
 	xyz[iter][1] = Y;        //
-	xyz[iter][2] = Z;        // Stock the coordinates, residue name
-	xyz[iter][3] = residus;  // and atom in an intermediate vector
-	xyz[iter][4] = atoms;    //
+	xyz[iter][2] = Z;        // Stock the coordinates, residue name,
+	xyz[iter][3] = residus;  // atom and other informations in an
+	xyz[iter][4] = atoms;    // intermediate vector
+	xyz[iter][5] = pos;      //
+	xyz[iter][6] = Chain;    //
 }
 
 
@@ -224,6 +228,7 @@ int main(int argc, char** argv)
 	string in_dir;    // Pathway of the repository
 	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
+	bool PosChain = false;
 	bool Omega = false;   // Omega angle values are in option (default : false)
 	bool Rna = false;     // Turn on RNA mode for pseudotorsion angles (default : protein psi-phi)
 	bool alterC4 = true;  // Only pseudotorsion angles with C4' (RNA)
@@ -231,11 +236,12 @@ int main(int argc, char** argv)
 	bool C4andC1 = false; bool check_A = false;  // Pseudotorsion angles with C4' and C1' (RNA)
 
 	int opt;
-	while ((opt = getopt(argc,argv, "hORaAd:l:o:")) != EOF){
+	while ((opt = getopt(argc,argv, "hpORaAd:l:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
 			case 'l': listpdb = optarg; break;
 			case 'o': output = optarg; break;
+			case 'p': PosChain = true; break;
 			case 'O': Omega = true; break;
 			case 'R': Rna = true; break;
 			case 'a': alterC4 = false; alterC1 = true; check_a = true; break;
@@ -252,6 +258,9 @@ int main(int argc, char** argv)
 	if (!Rna and alterC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-a]\n" << endl; return 1;}
 	if (!Rna and C4andC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-A]\n" << endl; return 1;}
 	if (check_a and check_A){ cerr << "Error (option) : -a and -A are incompatible options\n" << endl; return 1;}
+
+	string position1; string position2; string res_chain;
+	string head3; string head4; string head_res = "        PAIR "; string head_pos; string head_ch; 
 
 	if (!Rna)
 	{
@@ -288,6 +297,15 @@ int main(int argc, char** argv)
 		file_out.open(ffile);           // Open a new file for angle values
 		if (file_out.is_open())
 		{
+			if (Omega){ head3 = "    \t OMEGA ";}
+			if (PosChain)
+			{
+				head_res = "        PAIR ";
+				head_pos = "     POSITION";
+				head_ch = "     CHAIN ";
+			}
+
+			file_out << "  PSI  " << "      \t" << "  PHI  " << head3 << head_res << head_pos << head_ch << endl;
 			for (int k = 0; k < Coords.size(); k++)
 			{
 				if (Coords[k].size() >= 6)
@@ -296,6 +314,12 @@ int main(int argc, char** argv)
 					cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-5; i+=3)
 					{
+						if (PosChain)
+						{
+							position1 = "\t"+Coords[k][i][5];
+							position2 = "-"+Coords[k][i+3][5];
+							res_chain = "      \t"+Coords[k][i][6];
+						}
 						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
 						if (order == "N CAC N ")
 						{
@@ -306,9 +330,11 @@ int main(int argc, char** argv)
 							{
 								int a = i+1;
 								float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+1], Coords[k][a+2], Coords[k][a+3]);   // ATOM : CA-C-N-CA
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+								<< position1 << position2 << res_chain << endl;
 							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}   // Residue concerned for each angle
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+							<< position1 << position2 << res_chain << endl;}   // Residue concerned for each angle
 						} else if (order == "N C CAN ")
 						{
 							int j = i+1;
@@ -318,9 +344,11 @@ int main(int argc, char** argv)
 							{
 								int a = i+2;
 								float angle_omega = torsion_angle(Coords[k][a], Coords[k][a+2], Coords[k][a+1], Coords[k][a+3]);   // ATOM : CA-N-C-CA --> CA-C-N-CA
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+								<< position1 << position2 << res_chain << endl;
 							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+							<< position1 << position2 << res_chain << endl;}
 						} else {
 
 							string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone are 
@@ -328,9 +356,11 @@ int main(int argc, char** argv)
 							pdbmistake = true;
 							if (Omega)
 							{
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;
+								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+								<< position1 << position2 << res_chain << endl;
 							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << endl;}
+							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
+							<< position1 << position2 << res_chain << endl;}
 							
 							if (Coords[k][i+1][4] == "N ")         //
 							{                                      //
@@ -389,6 +419,16 @@ int main(int argc, char** argv)
 		file_out.open(ffile);           // Open a new file for angle values
 		if (file_out.is_open())
 		{
+			string head1 = " THETA "; string head2 = "  ETA  ";
+			if (alterC1){ head1 = " THETA'"; head2 = "  ETA' ";}
+			if (C4andC1){ head3 = "    \t THETA'"; head4 = "    \t  ETA' ";}
+			if (PosChain)
+			{
+				head_res = "        PAIR ";
+				head_pos = "     POSITION";
+				head_ch = "     CHAIN ";
+			}
+			file_out << head1 << "      \t" << head2 << head3 << head4 << head_res << head_pos << head_ch << endl;
 			for (int k = 0; k < Coords.size(); k++)
 			{
 				if (Coords[k].size() >= 7)
@@ -397,6 +437,12 @@ int main(int argc, char** argv)
 					cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-6; i+=3)
 					{
+						if (PosChain)
+						{
+							position1 = "\t"+Coords[k][i][5];
+							position2 = "-"+Coords[k][i+3][5];
+							res_chain = "      \t"+Coords[k][i][6];
+						}
 						string order1 = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+3][4]+Coords[k][i+4][4];
 						string order2 = Coords[k][i][4]+Coords[k][i+2][4]+Coords[k][i+3][4]+Coords[k][i+5][4];
 						if ((order1 == "P  C4'P  C4'") && (alterC4))
@@ -404,13 +450,15 @@ int main(int argc, char** argv)
 							int j = i+1;
 							float angle_theta = torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4]);    // ATOMS : P-C4'-P-C4' 
 							float angle_eta = torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+3], Coords[k][j+5]);    // ATOMS : C4'-P-C4'-P
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;   // Residue concerned for each angle
+							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
+							<< position1 << position2 << res_chain << endl;   // Residue concerned for each angle
 						} else if ((order2 == "P  C1'P  C1'") && (alterC1)) 
 						{
 							int j = i+2;
 							float angle_thetaP = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]);    // ATOMS : P-C1'-P-C1'
 							float angle_etaP = torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+3], Coords[k][j+4]);    // ATOMS : C1'-P-C1'-P
-							file_out << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+							file_out << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
+							<< position1 << position2 << res_chain << endl;
 						} else if (C4andC1)
 						{
 							if ((order1 == "P  C4'P  C4'") && (order2 == "P  C1'P  C1'"))
@@ -421,14 +469,16 @@ int main(int argc, char** argv)
 								int j2 = i+2;
 								float angle_thetaP = torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]);    // ATOMS : P-C1'-P-C1'
 								float angle_etaP = torsion_angle(Coords[k][j2], Coords[k][j2+1], Coords[k][j2+3], Coords[k][j2+4]);  // ATOMS : C1'-P-C1'-P
-								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
+								<< position1 << position2 << res_chain << endl;
 							} else {
 								string angle_theta = "  NA  ";   // 
 								string angle_eta = "  NA  ";     // Returns NA if the atoms in the backbone are
 								string angle_thetaP = "  NA  ";  // not well referenced for 1 pair of residue
 								string angle_etaP = "  NA  ";    //
 								pdbmistake = true;
-								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
+								<< position1 << position2 << res_chain << endl;
 								
 								if (Coords[k][i+1][4] == "P  ")        //
 								{                                      //
@@ -445,7 +495,8 @@ int main(int argc, char** argv)
 							string angle_theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
 							string angle_eta = "  NA  ";    // not well referenced for 1 pair of residue
 							pdbmistake = true;
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] << endl;
+							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
+							<< position1 << position2 << res_chain << endl;
 							
 							if (Coords[k][i+1][4] == "P  ")        //
 							{                                      //
