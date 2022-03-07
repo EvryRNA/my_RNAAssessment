@@ -210,26 +210,29 @@ int main(int argc, char** argv)
 {
 	string optlist =
 		"   Usage:\n"
-		"   ./angle_calc [-d PATHWAY_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R]\n"
-		"                [-a|-A]\n\n"
+		"   ./angle_calc [-d PATHWAY_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
+		"                [-p] [-f]\n\n"
 		"   Options:\n"
 		"   -d   string   Repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
-		"   -o   string   Name of your files in output (ex.: YourOuputName_pdbcode.txt). The\n"
-		"                 'pdbcode' of the files processed are automatically add to the output file\n"
-		"                 name that you chose\n"
+		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
+		"                 is automatically add to the output file name that you chose\n"
 		"   -O            Add Omega angles values to those of Psi and Phi angles\n\n"
 		"   Access to the RNA processing mode and its options:\n"
 		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and C4')\n"
-		"   -a            Alternative calculation with atoms P and C1'\n"
+		"   -a            Alternative calculation (Theta'/Eta') with atoms P and C1'\n"
 		"   -A            Calculation of pseudotorsion angles using both methods\n\n"
+		"   Additional options:\n"
+		"   -p            Allow the user to see the residues sequence number and their chain identifiers on\n"
+		"                 the output file\n"
+		"   -f            Allow the user to see from which PDB the observed angle values come from\n"           
 		"   -h            Help\n\n";
 
 	string in_dir;    // Pathway of the repository
 	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
-	bool PosChain = false;
-	bool ShowFile = false;
+	bool PosChain = false;  // To add residue sequence number and chain identifier
+	bool ShowFile = false;  // To add PDB file code
 	bool Omega = false;   // Omega angle values are in option (default : false)
 	bool Rna = false;     // Turn on RNA mode for pseudotorsion angles (default : protein psi-phi)
 	bool alterC4 = true;  // Only pseudotorsion angles with C4' (RNA)
@@ -295,7 +298,6 @@ int main(int argc, char** argv)
 	{
 		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
-		//cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
 
 		if (fl.size() == 9)
@@ -314,16 +316,15 @@ int main(int argc, char** argv)
 			{
 				if (Coords[k].size() >= 6)
 				{
-					//cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-5; i+=3)
 					{
 						if (PosChain)
 						{
-							position1 = "\t"+Coords[k][i][5];
-							position2 = "-"+Coords[k][i+3][5];
-							res_chain = "      \t"+Coords[k][i][6];
-						}
-						if (ShowFile){ pdb_file = "          "+line.substr(0,4);}
+							position1 = "\t"+Coords[k][i][5];                      //
+							position2 = "-"+Coords[k][i+3][5];                     // 
+							res_chain = "      \t"+Coords[k][i][6];                // Add position, chain and PDB code
+						}                                                          //
+						if (ShowFile){ pdb_file = "          "+line.substr(0,4);}  //
 						
 						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
 						if (order == "N CAC N ")
@@ -392,11 +393,10 @@ int main(int argc, char** argv)
 	} else {
 	cpt +=1; cptot += 1;
 	cout.flush();
-    cout << "\r" << "Processed PDB files :" << cpt;}
-	//cout << "Done !" << endl;}
+    cout << "\r" << "Processed PDB files :" << cpt;}  // To see the evolution of the processing
 		}
 	}
-	cout << "\nTotal processed files : " << cpt << " on " << cptot << endl;
+	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl; // To see how many file was processed at the end
 	file_out.close();}
 	return 0;}
 
@@ -429,7 +429,6 @@ int main(int argc, char** argv)
 	{
 		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
-		//cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
 
 		if (fl.size() == 9)
@@ -448,7 +447,6 @@ int main(int argc, char** argv)
 			{
 				if (Coords[k].size() >= 7)
 				{
-					//cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-6; i+=3)
 					{
 						if (PosChain)
@@ -540,10 +538,9 @@ int main(int argc, char** argv)
 	cpt +=1; cptot += 1;
 	cout.flush();
     cout << "\r" << "Processed PDB files :" << cpt;}
-	//cout << "Done !" << endl;}
 		}
 	}
-	cout << "\nTotal processed files : " << cpt << " on " << cptot << endl;
+	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl;
 	file_out.close();}
 	return 0;}
 }
