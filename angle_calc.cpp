@@ -275,15 +275,28 @@ int main(int argc, char** argv)
 
 	ifstream my_pdbs(listpdb);
 	string line;
+
+	string ffile = output+".txt";  // Output file name + processed PDB code
+	ofstream file_out;
+	file_out.open(ffile);           // Open a new file for angle values
+	if (file_out.is_open())
+	{
+		if (Omega){ head3 = "    \t OMEGA ";}
+		if (PosChain)
+		{
+			head_pos = "     POSITION";
+			head_ch = "     CHAIN ";
+		}
+		if (ShowFile){ head_f = "     PDB_FILE";}
+	file_out << "  PSI  " << "      \t" << "  PHI  " << head3 << head_res << head_pos << head_ch << head_f << endl;
+
+	int cpt = 0; int cptot = 0;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
 		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
-		cout << fl << endl;
+		//cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
-		string ffile = output+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
-		
-		ofstream file_out;
 
 		if (fl.size() == 9)
 		{
@@ -293,26 +306,15 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "Error: There is no protein sequence in this PDB file\n" << endl;
+			cerr << "\n" << fl << "\nError: There is no protein sequence in this PDB file\n" << endl;
+			cptot += 1;
 		} else {
 
-		file_out.open(ffile);           // Open a new file for angle values
-		if (file_out.is_open())
-		{
-			if (Omega){ head3 = "    \t OMEGA ";}
-			if (PosChain)
-			{
-				head_pos = "     POSITION";
-				head_ch = "     CHAIN ";
-			}
-			if (ShowFile){ head_f = "     PDB_FILE";}
-
-			file_out << "  PSI  " << "      \t" << "  PHI  " << head3 << head_res << head_pos << head_ch << head_f << endl;
 			for (int k = 0; k < Coords.size(); k++)
 			{
 				if (Coords[k].size() >= 6)
 				{
-					cout << "Chain " << k+1 << endl;
+					//cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-5; i+=3)
 					{
 						if (PosChain)
@@ -380,15 +382,22 @@ int main(int argc, char** argv)
 				} else {
 				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
 			}
-		}
+		
 	if (pdbmistake) {
-		cerr << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cpt += 1; cptot += 1;
 	} else if (cutoff) {
-		cerr << "\nError (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cerr << "\n" << fl << "\nError (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cptot += 1;
 	} else {
-	cout << "Done !" << endl;}
-	file_out.close();}
+	cpt +=1; cptot += 1;
+	cout.flush();
+    cout << "\r" << "Processed PDB files :" << cpt;}
+	//cout << "Done !" << endl;}
+		}
 	}
+	cout << "\nTotal processed files : " << cpt << " on " << cptot << endl;
+	file_out.close();}
 	return 0;}
 
 
@@ -398,15 +407,30 @@ int main(int argc, char** argv)
 
 	ifstream my_pdbs(listpdb);
 	string line;
+
+	string ffile = output+".txt";  // Output file name + processed PDB code
+	ofstream file_out;
+	file_out.open(ffile);           // Open a new file for angle values
+	if (file_out.is_open())
+	{
+		string head1 = " THETA "; string head2 = "  ETA  ";
+		if (alterC1){ head1 = " THETA'"; head2 = "  ETA' ";}
+		if (C4andC1){ head3 = "    \t THETA'"; head4 = "    \t  ETA' ";}
+		if (PosChain)
+		{
+			head_pos = "     POSITION";
+			head_ch = "     CHAIN ";
+		}
+		if (ShowFile){ head_f = "     PDB_FILE";}
+	file_out << head1 << "      \t" << head2 << head3 << head4 << head_res << head_pos << head_ch << head_f << endl;
+
+	int cpt = 0; int cptot = 0;
 	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	{
 		bool pdbmistake = false; bool cutoff = false;
 		string fl = line;
-		cout << fl << endl;
+		//cout << fl << endl;
 		vector<vector<vector<string> >> Coords;
-		string ffile = output+"_"+fl.substr(0,fl.size()-4)+".txt";  // Output file name + processed PDB code
-		
-		ofstream file_out;
 
 		if (fl.size() == 9)
 		{
@@ -416,28 +440,15 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "Error: There is no RNA sequence in this PDB file\n" << endl;
+			cerr << "\n" << fl << "\nError: There is no RNA sequence in this PDB file\n" << endl;
+			cptot += 1;
 		} else {
 
-		file_out.open(ffile);           // Open a new file for angle values
-		if (file_out.is_open())
-		{
-			string head1 = " THETA "; string head2 = "  ETA  ";
-			if (alterC1){ head1 = " THETA'"; head2 = "  ETA' ";}
-			if (C4andC1){ head3 = "    \t THETA'"; head4 = "    \t  ETA' ";}
-			if (PosChain)
-			{
-				head_pos = "     POSITION";
-				head_ch = "     CHAIN ";
-			}
-			if (ShowFile){ head_f = "     PDB_FILE";}
-
-			file_out << head1 << "      \t" << head2 << head3 << head4 << head_res << head_pos << head_ch << head_f << endl;
 			for (int k = 0; k < Coords.size(); k++)
 			{
 				if (Coords[k].size() >= 7)
 				{
-					cout << "Chain " << k+1 << endl;
+					//cout << "Chain " << k+1 << endl;
 					for (int i = 0; i < Coords[k].size()-6; i+=3)
 					{
 						if (PosChain)
@@ -518,15 +529,21 @@ int main(int argc, char** argv)
 				} else {
 				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
 			}
-		}
+
 	if (pdbmistake) {
-		cerr << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cpt += 1; cptot += 1;
 	} else if (cutoff) {
-		cerr << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cerr << "\n" << fl << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cptot += 1;
 	} else {
-	cout << "Done !" << endl;}
-	file_out.close();
+	cpt +=1; cptot += 1;
+	cout.flush();
+    cout << "\r" << "Processed PDB files :" << cpt;}
+	//cout << "Done !" << endl;}
 		}
 	}
+	cout << "\nTotal processed files : " << cpt << " on " << cptot << endl;
+	file_out.close();}
 	return 0;}
 }
