@@ -210,10 +210,10 @@ int main(int argc, char** argv)
 {
 	string optlist =
 		"   Usage:\n"
-		"   ./angle_calc [-d PATHWAY_REPOSITORY] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
+		"   ./angle_calc [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
 		"                [-p] [-f]\n\n"
 		"   Options:\n"
-		"   -d   string   Repository where PDB files you interested of are\n"
+		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
 		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
 		"                 is automatically add to the output file name that you chose\n"
@@ -300,9 +300,11 @@ int main(int argc, char** argv)
 		string fl = line;
 		vector<vector<vector<string> >> Coords;
 
-		if (fl.size() == 9)
+		if ((fl.size() == 9) || (fl.size() == 5))
 		{
 			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
+		} else if (fl.size() == 4){
+			Coords = coord_pdb(in_dir+fl+".pdb");
 		} else {
 			Coords = coord_pdb(in_dir+fl);}  // 3D vector {Chain[Atom[informations]]}
 
@@ -431,9 +433,11 @@ int main(int argc, char** argv)
 		string fl = line;
 		vector<vector<vector<string> >> Coords;
 
-		if (fl.size() == 9)
+		if ((fl.size() == 9) || (fl.size() == 5))
 		{
 			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), true);
+		} else if (fl.size() == 4){
+			Coords = coord_pdb(in_dir+fl+".pdb", true);
 		} else {
 			Coords = coord_pdb(in_dir+fl, true);}  // 3D vector {Chain[Atom[informations]]}
 
