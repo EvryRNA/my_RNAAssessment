@@ -65,7 +65,7 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 							if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i);
-							} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
+							} else if ((stof(line.substr(54,6)) > occupancy) && (!interm_tab.empty())) // Compare the occupancy if there is RAL
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
 							}
@@ -90,6 +90,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
+	string previous_letter = " ";
 	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
@@ -121,7 +122,11 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 						if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						} else if (stof(line.substr(54,6)) > occupancy) // Compare the occupancy if there is RAL
+							previous_letter = line.substr(vrf2,1);
+						} else if (previous_letter == " ")
+						{
+							add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						} else if ((stof(line.substr(54,6)) > occupancy) && (!interm_tab.empty())) // Compare the occupancy if there is RAL
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
 						}
@@ -202,7 +207,7 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
     	float angle = -acos(scalar_prod(vecteur_normal1,vecteur_normal2)/
 	    	          (norme(vecteur_normal1)*norme(vecteur_normal2)))*180/M_PI; // [-180°;0[
     	return angle;
-    }   
+    }
 }
 
 
