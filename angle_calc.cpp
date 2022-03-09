@@ -35,6 +35,7 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 	vector<string> tab_atom;
 	string line;
 	string Atom;
+	string previous_letter = " ";
 	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
@@ -65,7 +66,12 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 							if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i);
-							} else if ((stof(line.substr(54,6)) > occupancy) && (!interm_tab.empty())) // Compare the occupancy if there is RAL
+								previous_letter = line.substr(vrf2,1);
+							}else if (previous_letter == " ")
+							{
+								add_coords(interm_tab, line, residu, Atom, occupancy, i);
+								previous_letter = line.substr(vrf2,1);
+							} else if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
 							}
@@ -126,7 +132,8 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 						} else if (previous_letter == " ")
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						} else if ((stof(line.substr(54,6)) > occupancy) && (!interm_tab.empty())) // Compare the occupancy if there is RAL
+							previous_letter = line.substr(vrf2,1);
+						} else if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
 						}
@@ -143,6 +150,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 					{
 						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						previous_letter = line.substr(vrf2,1);
 					} else {
 						tab_atom.clear();
 					}
