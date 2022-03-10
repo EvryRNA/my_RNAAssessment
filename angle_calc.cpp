@@ -35,7 +35,7 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 	vector<string> tab_atom;
 	string line;
 	string Atom;
-	string previous_letter = " ";
+	string previous_letter = " ";  // For alternates locations that don't start with A
 	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
@@ -96,7 +96,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
-	string previous_letter = " ";
+	string previous_letter = " ";  // For alternates locations that don't start with A
 	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
