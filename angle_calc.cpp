@@ -219,7 +219,7 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
 }
 
 
-string ftsround(float num, int deci){
+string ftsround(float num, int deci){  // For round correctly angle values
 	try {
 	if (deci == 0){
 		int NUM = round(num);
