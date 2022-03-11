@@ -220,6 +220,7 @@ float torsion_angle(vector<string> atom1, vector<string> atom2, vector<string> a
 
 
 string ftsround(float num, int deci){
+	try {
 	if (deci == 0){
 		int NUM = round(num);
 		return to_string(NUM);
@@ -231,7 +232,15 @@ string ftsround(float num, int deci){
 	if (entier.empty()){ entier = "0";}
 	if (entier == "-"){ entier = "-0";}
 	string rnum = entier+"."+sNUM.substr(sNUM.size()-deci, deci);
-	return rnum;
+	return rnum;} catch (...){                                     // If num is a NaN (because of the acos() in torsion_angle()) 
+		string sNUM = "180.";
+		if (deci == 0){ sNUM = "180";} else {
+		for (int i = 0; i < deci; ++i)
+		{
+			sNUM += "0";
+		}}
+		return sNUM;
+	}
 }
 
 
