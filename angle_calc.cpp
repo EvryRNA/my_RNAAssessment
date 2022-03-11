@@ -240,7 +240,7 @@ int main(int argc, char** argv)
 	string optlist =
 		"   Usage:\n"
 		"   ./angle_calc [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
-		"                [-p] [-f] [-i]\n\n"
+		"                [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
@@ -502,15 +502,15 @@ int main(int argc, char** argv)
 						if ((order1 == "P  C4'P  C4'") && (alterC4))
 						{
 							int j = i+1;
-							string angle_theta = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4]), decimal);    // ATOMS : P-C4'-P-C4' 
-							string angle_eta = ftsround(torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+3], Coords[k][j+5]), decimal);    // ATOMS : C4'-P-C4'-P
+							string angle_theta = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4], to360), decimal);    // ATOMS : P-C4'-P-C4' 
+							string angle_eta = ftsround(torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+3], Coords[k][j+5], to360), decimal);    // ATOMS : C4'-P-C4'-P
 							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
 							<< position1 << position2 << res_chain << pdb_file << endl;   // Residue concerned for each angle
 						} else if ((order2 == "P  C1'P  C1'") && (alterC1)) 
 						{
 							int j = i+2;
-							string angle_thetaP = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]), decimal);    // ATOMS : P-C1'-P-C1'
-							string angle_etaP = ftsround(torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+3], Coords[k][j+4]), decimal);    // ATOMS : C1'-P-C1'-P
+							string angle_thetaP = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5], to360), decimal);    // ATOMS : P-C1'-P-C1'
+							string angle_etaP = ftsround(torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+3], Coords[k][j+4], to360), decimal);    // ATOMS : C1'-P-C1'-P
 							file_out << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
 							<< position1 << position2 << res_chain << pdb_file << endl;
 						} else if (C4andC1)
@@ -518,11 +518,11 @@ int main(int argc, char** argv)
 							if ((order1 == "P  C4'P  C4'") && (order2 == "P  C1'P  C1'"))
 							{
 								int j1 = i+1;
-								string angle_theta = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4]), decimal);    // ATOMS : P-C4'-P-C4' 
-								string angle_eta = ftsround(torsion_angle(Coords[k][j1], Coords[k][j1+2], Coords[k][j1+3], Coords[k][j1+5]), decimal);  // ATOMS : C4'-P-C4'-P
+								string angle_theta = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4], to360), decimal);    // ATOMS : P-C4'-P-C4' 
+								string angle_eta = ftsround(torsion_angle(Coords[k][j1], Coords[k][j1+2], Coords[k][j1+3], Coords[k][j1+5], to360), decimal);  // ATOMS : C4'-P-C4'-P
 								int j2 = i+2;
-								string angle_thetaP = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5]), decimal);    // ATOMS : P-C1'-P-C1'
-								string angle_etaP = ftsround(torsion_angle(Coords[k][j2], Coords[k][j2+1], Coords[k][j2+3], Coords[k][j2+4]), decimal);  // ATOMS : C1'-P-C1'-P
+								string angle_thetaP = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5], to360), decimal);    // ATOMS : P-C1'-P-C1'
+								string angle_etaP = ftsround(torsion_angle(Coords[k][j2], Coords[k][j2+1], Coords[k][j2+3], Coords[k][j2+4], to360), decimal);  // ATOMS : C1'-P-C1'-P
 								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
 								<< position1 << position2 << res_chain << pdb_file << endl;
 							} else {
