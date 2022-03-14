@@ -16,7 +16,8 @@ void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, str
 	string Z = lines.substr(46,8);  //
 	string pos = lines.substr(22,4);  // Residue position
 	string Chain = lines.substr(21,1);
-	occup = stof(lines.substr(54,6));  // For residue alternate location (RAL)
+	try {occup = stof(lines.substr(54,6));}  // For residue alternate location (RAL)
+	catch (...){ occup = 1;}                 //
 	if (nx_step){xyz.push_back(vector<string>(7));
 	iter += 1;}
 	xyz[iter][0] = X;        // 
@@ -71,10 +72,10 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i);
 								previous_letter = line.substr(vrf2,1);
-							} else if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
+							} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
-							}
+							}} catch (...) {}}
 						}
 					}
 				}
@@ -133,10 +134,10 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i);
 							previous_letter = line.substr(vrf2,1);
-						} else if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
+						} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
-						}
+						}} catch (...) {}}
 					}
 				}else {
 					tab_chain.push_back(line.substr(21,1));       // Chain changing
