@@ -590,57 +590,10 @@ int main(int argc, char** argv)
 						} else if (C4andC1)
 						{
 							int j1 = i+1; int j2 = i+2; string angle_theta; string angle_eta; string angle_thetaP; string angle_etaP;
-							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j1, pdbmistake, to360, decimal, false);
+							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j1, pdbmistake, to360, decimal, false);  // Reagjustement of i during get_thetaP_etaP()
 							get_thetaP_etaP(Coords, order2, angle_thetaP, angle_etaP, k, i, j2, pdbmistake, to360, decimal);
 							file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
 							<< position1 << position2 << res_chain << pdb_file << endl;
-							/*if ((order1 == "P  C4'P  C4'") && (order2 == "P  C1'P  C1'"))
-							{
-								int j1 = i+1; int j2 = i+2; string angle_theta; string angle_eta; string angle_thetaP; string angle_etaP;
-								string angle_theta = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+3], Coords[k][i+4], to360), decimal);    // ATOMS : P-C4'-P-C4' 
-								string angle_eta = ftsround(torsion_angle(Coords[k][j1], Coords[k][j1+2], Coords[k][j1+3], Coords[k][j1+5], to360), decimal);  // ATOMS : C4'-P-C4'-P
-								int j2 = i+2;
-								string angle_thetaP = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+3], Coords[k][i+5], to360), decimal);    // ATOMS : P-C1'-P-C1'
-								string angle_etaP = ftsround(torsion_angle(Coords[k][j2], Coords[k][j2+1], Coords[k][j2+3], Coords[k][j2+4], to360), decimal);  // ATOMS : C1'-P-C1'-P
-								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-								<< position1 << position2 << res_chain << pdb_file << endl;
-							} else {
-								string angle_theta = "  NA  ";   // 
-								string angle_eta = "  NA  ";     // Returns NA if the atoms in the backbone are
-								string angle_thetaP = "  NA  ";  // not well referenced for 1 pair of residue
-								string angle_etaP = "  NA  ";    //
-								pdbmistake = true;
-								file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-								<< position1 << position2 << res_chain << pdb_file << endl;
-								
-								if (Coords[k][i+1][4] == "P  ")        //
-								{                                      //
-									i -= 2;                            //
-								} else if (Coords[k][i+2][4] == "P  ") // Try to find another pair of residue
-								{                                      // with all their backbone atoms for the
-									i -= 1;                            // next step
-								} else {                               //
-								while(Coords[k][i+3][4] != "P  "){     //
-									i += 1;}                           //
-								}
-							}*/
-						} else {
-							string angle_theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
-							string angle_eta = "  NA  ";    // not well referenced for 1 pair of residue
-							pdbmistake = true;
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-							<< position1 << position2 << res_chain << pdb_file << endl;
-							
-							if (Coords[k][i+1][4] == "P  ")        //
-							{                                      //
-								i -= 2;                            //
-							} else if (Coords[k][i+2][4] == "P  ") // Try to find another pair of residue
-							{                                      // with all their backbone atoms for the
-								i -= 1;                            // next step
-							} else {                               //
-							while(Coords[k][i+3][4] != "P  "){     //
-								i += 1;}                           //
-							}	
 						}
 					}
 				} else {
