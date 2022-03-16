@@ -431,7 +431,7 @@ int main(int argc, char** argv)
 	ifstream my_pdbs(listpdb);
 	string line;
 
-	string ffile = output+".txt";  // Output file name + processed PDB code
+	string ffile = output+".txt";  // Output file name
 	ofstream file_out;
 	file_out.open(ffile);           // Open a new file for angle values
 	if (file_out.is_open())
@@ -562,7 +562,7 @@ int main(int argc, char** argv)
 	ifstream my_pdbs(listpdb);
 	string line;
 
-	string ffile = output+".txt";  // Output file name + processed PDB code
+	string ffile = output+".txt";  // Output file name
 	ofstream file_out;
 	file_out.open(ffile);           // Open a new file for angle values
 	if (file_out.is_open())
