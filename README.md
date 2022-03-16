@@ -41,6 +41,6 @@ To apply this program to a list of RNA PDB files (eta/theta), you can use the pr
 ```
 ./angle_calc -d dataset_pathway/ -l list_RNA_PDB.txt -o output_RNA_file -R
 ```
-You can also access to the pseudotorsion angle values eta' and theta' using options `-Ra` or `-RA` instead of option `-R`.
+You can also access to the pseudotorsion angle values **eta'** and **theta'** using options `-Ra` or `-RA` instead of option `-R`.
 
 There are also few more options that we leave it to the user to discover them by himself with the help option `-h`, like `-O` option to add the Omega torsion angle values for proteins, , just to name one. 
