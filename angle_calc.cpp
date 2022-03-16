@@ -233,7 +233,15 @@ string ftsround(float num, int deci){  // For round correctly angle values
 	if (entier.empty()){ entier = "0";}
 	if (entier == "-"){ entier = "-0";}
 	string rnum = entier+"."+sNUM.substr(sNUM.size()-deci, deci);
-	return rnum;} catch (...){                                     // If num is a NaN (because of the acos() in torsion_angle()) 
+	if (rnum.size() > 5+deci){                   // Control
+		string sNUM = "180.";
+		if (deci == 0){ sNUM = "180";} else {
+		for (int i = 0; i < deci; ++i)
+		{
+			sNUM += "0";
+		}}
+		return sNUM;}
+	else {return rnum;}} catch (...){             // If num is a NaN (because of the acos() in torsion_angle()) 
 		string sNUM = "180.";
 		if (deci == 0){ sNUM = "180";} else {
 		for (int i = 0; i < deci; ++i)
@@ -248,17 +256,33 @@ string ftsround(float num, int deci){  // For round correctly angle values
 void get_theta_eta(vector<vector<vector<string> >> &pdbcoord, string &order, string &theta, string &eta, 
                    int &k, int &i, int &j, bool &pdbmistake,bool &to360, int &deci, bool adjust = true){
 	if (order == "P  C4'P  C4'"){
-		theta = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+1], pdbcoord[k][i+3], pdbcoord[k][i+4], to360), deci);    // ATOMS : P-C4'-P-C4' 
-		eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}    // ATOMS : C4'-P-C4'-P
+		theta = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+1], pdbcoord[k][i+3], pdbcoord[k][i+4], to360), deci);    // ATOMS : P-C4'-P-C4'
+		if (pdbcoord[k][i+6][4] == "P  "){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}    // ATOMS : C4'-P-C4'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
+		else { eta = "  NA  ";}}
 	else if (order == "P  C4'C1'C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+1], pdbcoord[k][i+5], pdbcoord[k][i+4], to360), deci);  // ATOMS : P-C4'-C4'-P --> P-C4'-P-C4'
-		eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+2], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C4'-C4'-P-P --> C4'-P-C4'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}    // ATOMS : C4'-C4'-P-P --> C4'-P-C4'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
+		else { eta = "  NA  ";}}
 	else if (order == "C1'C4'P  C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i+1], pdbcoord[k][i+3], pdbcoord[k][i+4], to360), deci);  // ATOMS : C4'-P-P-C4' --> P-C4'-P-C4'
-		eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}  // ATOMS : C4'-(P-)P-C4'-P--> (P-)C4'-P-C4'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}  // ATOMS : C4'-(P-)P-C4'-P--> (P-)C4'-P-C4'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
+		else { eta = "  NA  ";}}
 	else if (order == "C1'C4'C1'C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i+1], pdbcoord[k][i+5], pdbcoord[k][i+4], to360), deci);  // ATOMS : C4'-P-C4'-P --> P-C4'-P-C4'
-		eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+2], pdbcoord[k][j+4], to360), deci);} // ATOMS : C4'-(P-)C4'-P-P --> (P-)C4'-P-C4'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);} // ATOMS : C4'-(P-)C4'-P-P --> (P-)C4'-P-C4'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
+		else { eta = "  NA  ";}}
 	else {
 		theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
 		eta = "  NA  ";    // not well referenced for 1 pair of residue
@@ -283,16 +307,32 @@ void get_thetaP_etaP(vector<vector<vector<string> >> &pdbcoord, string &order, s
                    int &k, int &i, int &j, bool &pdbmistake,bool &to360, int &deci){
 	if (order == "P  C1'P  C1'"){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+2], pdbcoord[k][i+3], pdbcoord[k][i+5], to360), deci);    // ATOMS : P-C1'-P-C1'
-		etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-P-C1'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-P-C1'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+6], to360), deci);}
+		else { etaP = "  NA  ";}}
 	else if (order == "P  C1'C1'P  "){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+2], pdbcoord[k][i+5], pdbcoord[k][i+3], to360), deci);  // ATOMS : P-C1'-C1'-P --> P-C1'-P-C1'
-		etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-C1'-P-P --> C1'-P-C1'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-C1'-P-P --> C1'-P-C1'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+6], to360), deci);}
+		else { etaP = "  NA  ";}}
 	else if (order == "C1'P  P  C1'"){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i], pdbcoord[k][i+3], pdbcoord[k][i+5], to360), deci);  // ATOMS : C1'-P-P-C1' --> P-C1'-P-C1'
-		etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}  // ATOMS : C1'-(P-)P-C1'-P--> (P-)C1'-P-C1'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}  // ATOMS : C1'-(P-)P-C1'-P--> (P-)C1'-P-C1'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+6], to360), deci);}
+		else { etaP = "  NA  ";}}
 	else if (order == "C1'P  C1'P  "){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i], pdbcoord[k][i+5], pdbcoord[k][i+3], to360), deci);  // ATOMS : C1'-P-C1'-P --> P-C1'-P-C1'
-		etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);} // ATOMS : C1'-(P-)C1'-P-P --> (P-)C1'-P-C1'-P
+		if (pdbcoord[k][i+6][4] == "P  "){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);} // ATOMS : C1'-(P-)C1'-P-P --> (P-)C1'-P-C1'-P
+		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
+			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);}
+		else { etaP = "  NA  ";}}
 	else {
 		thetaP = "  NA  ";  // Returns NA if the atoms in the backbone are 
 		etaP = "  NA  ";    // not well referenced for 1 pair of residue
@@ -325,8 +365,8 @@ int main(int argc, char** argv)
 		"   -O            Add Omega angles values to those of Psi and Phi angles\n\n"
 		"   Access to the RNA processing mode and its options:\n"
 		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and C4')\n"
-		"   -a            Alternative calculation (Theta'/Eta') using atoms P and C1'\n"
-		"   -A            Calculation of pseudotorsion angles using both methods\n\n"
+		"   -Ra           Alternative calculation (Theta'/Eta') using atoms P and C1'\n"
+		"   -RA           Calculation of pseudotorsion angles using both methods\n\n"
 		"   Additional options:\n"
 		"   -p            Allow the user to see the residues sequence number and their chain identifiers on\n"
 		"                 the output file\n"
