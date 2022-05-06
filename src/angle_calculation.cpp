@@ -355,8 +355,8 @@ int main(int argc, char** argv)
 {
 	string optlist =
 		"   Usage:\n"
-		"   ./angle_calc [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
-		"                [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
+		"   ./angle_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
+		"                       [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
@@ -455,10 +455,13 @@ int main(int argc, char** argv)
 		if ((fl.size() == 9) || (fl.size() == 5))
 		{
 			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}
 		} else if (fl.size() == 4){
 			Coords = coord_pdb(in_dir+fl+".pdb");
+			if (ShowFile){ pdb_file = "          "+fl;}
 		} else {
 			Coords = coord_pdb(in_dir+fl);}  // 3D vector {Chain[Atom[informations]]}
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}
 
 		if (Coords.empty())
 		{
@@ -478,7 +481,7 @@ int main(int argc, char** argv)
 							position2 = "-"+Coords[k][i+3][5];                     // 
 							res_chain = "      \t"+Coords[k][i][6];                // Add position, chain and PDB code
 						}                                                          //
-						if (ShowFile){ pdb_file = "          "+line.substr(0,4);}  //
+						//if (ShowFile){ pdb_file = "          "+line.substr(0,line.size()-4);}  
 						
 						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
 						if (order == "N CAC N ")
@@ -611,7 +614,7 @@ int main(int argc, char** argv)
 							position2 = "-"+Coords[k][i+3][5];
 							res_chain = "      \t"+Coords[k][i][6];
 						}
-						if (ShowFile){ pdb_file = "          "+line.substr(0,4);}
+						if (ShowFile){ pdb_file = "          "+line.substr(0,line.size()-4);}
 						
 						string order1 = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+3][4]+Coords[k][i+4][4];
 						string order2 = Coords[k][i][4]+Coords[k][i+2][4]+Coords[k][i+3][4]+Coords[k][i+5][4];
