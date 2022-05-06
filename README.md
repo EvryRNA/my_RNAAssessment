@@ -22,10 +22,10 @@ using the command :
 ```
 python3 Downloader.py your_dataset_repository_pathway/ PDB_list.txt
 ```
-:warning: `your_dataset_repository_pathway/` must be an existing directory !
+:warning: `your_dataset_repository_pathway/` must be an existing repository !
 ### Install angle_calculation & distance_calculation
 
-Since they are C++ files, they must be compiled. Enter the following command, when you are in `my_RNAAssessment/` to do it:
+Since they are C++ files, they must be compiled. Enter the following command, when you are in `my_RNAAssessment/`, to do it:
 ```
 make
 ```
