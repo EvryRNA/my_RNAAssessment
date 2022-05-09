@@ -5,7 +5,6 @@
 #include <cstring>  // stof()
 #include <vector>
 #include <cmath>
-#include <algorithm> // find()
 #include <getopt.h>  // add options
 
 using namespace std;
@@ -177,14 +176,14 @@ int main(int argc, char** argv)
 {
     string optlist =
 		"   Usage:\n"
-		"   ./distance_calc [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-m MAX_DIST] [-R] \n\n"
+		"   ./distance_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-m MAX_DIST] [-R] \n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
 		"   -l   string   List of all PDB files you want to be processed\n"
 		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
 		"                 is automatically add to the output file name that you chose\n"
-        "   -m   float      Maximum interatomic distance (Å) (default=15.0)\n"
-		"   -R            Calculation of the distances for RNA structures (Using atoms C4')\n"          
+		"   -R            Calculation of the distances for RNA structures (Using atoms C4')\n"
+        	"   -m   float      Maximum interatomic distance (Å) (default=15.0)\n"          
 		"   -h            Help\n\n";
 
     string in_dir;    // Pathway of the repository

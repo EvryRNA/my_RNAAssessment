@@ -455,13 +455,13 @@ int main(int argc, char** argv)
 		if ((fl.size() == 9) || (fl.size() == 5))
 		{
 			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
-			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,4);}
 		} else if (fl.size() == 4){
 			Coords = coord_pdb(in_dir+fl+".pdb");
 			if (ShowFile){ pdb_file = "          "+fl;}
 		} else {
-			Coords = coord_pdb(in_dir+fl);}  // 3D vector {Chain[Atom[informations]]}
-			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}
+			Coords = coord_pdb(in_dir+fl);  // 3D vector {Chain[Atom[informations]]}
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}}
 
 		if (Coords.empty())
 		{
@@ -480,8 +480,7 @@ int main(int argc, char** argv)
 							position1 = "\t"+Coords[k][i][5];                      //
 							position2 = "-"+Coords[k][i+3][5];                     // 
 							res_chain = "      \t"+Coords[k][i][6];                // Add position, chain and PDB code
-						}                                                          //
-						//if (ShowFile){ pdb_file = "          "+line.substr(0,line.size()-4);}  
+						}                                                          //  
 						
 						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
 						if (order == "N CAC N ")
@@ -545,7 +544,7 @@ int main(int argc, char** argv)
 		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 		cpt += 1; cptot += 1;
 	} else if (cutoff) {
-		cerr << "\n" << fl << "\nError (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cerr << "\n" << fl << "\nWarning (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
 		cptot += 1;
 	} else {
 	cpt +=1; cptot += 1;
@@ -591,10 +590,13 @@ int main(int argc, char** argv)
 		if ((fl.size() == 9) || (fl.size() == 5))
 		{
 			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), true);
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,4);}
 		} else if (fl.size() == 4){
 			Coords = coord_pdb(in_dir+fl+".pdb", true);
+			if (ShowFile){ pdb_file = "          "+fl;}
 		} else {
-			Coords = coord_pdb(in_dir+fl, true);}  // 3D vector {Chain[Atom[informations]]}
+			Coords = coord_pdb(in_dir+fl, true);  // 3D vector {Chain[Atom[informations]]}
+			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}}
 
 		if (Coords.empty())
 		{
@@ -614,7 +616,6 @@ int main(int argc, char** argv)
 							position2 = "-"+Coords[k][i+3][5];
 							res_chain = "      \t"+Coords[k][i][6];
 						}
-						if (ShowFile){ pdb_file = "          "+line.substr(0,line.size()-4);}
 						
 						string order1 = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+3][4]+Coords[k][i+4][4];
 						string order2 = Coords[k][i][4]+Coords[k][i+2][4]+Coords[k][i+3][4]+Coords[k][i+5][4];
@@ -647,7 +648,7 @@ int main(int argc, char** argv)
 		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 		cpt += 1; cptot += 1;
 	} else if (cutoff) {
-		cerr << "\n" << fl << "\nError (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
+		cerr << "\n" << fl << "\nWarning (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
 		cptot += 1;
 	} else {
 	cpt +=1; cptot += 1;
