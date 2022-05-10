@@ -465,8 +465,8 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "\n" << fl << "\nError: There is no protein sequence in this PDB file\n" << endl;
 			cptot += 1;
+			cerr << "\n" << cptot  << " : " << "Error: There is no protein sequence in this PDB file ("+fl+")" << endl;
 		} else {
 
 			for (int k = 0; k < Coords.size(); k++)
@@ -541,11 +541,11 @@ int main(int argc, char** argv)
 			}
 		
 	if (pdbmistake) {
-		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 		cpt += 1; cptot += 1;
+		cerr << "\n" << cptot  << " : " << "Warning: Potential badly written text in the PDB file ("+fl+")" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
-		cerr << "\n" << fl << "\nWarning (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles\n" <<endl;
 		cptot += 1;
+		cerr << "\n" << cptot  << " : " << "Warning (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles ("+fl+")" << endl;	
 	} else {
 	cpt +=1; cptot += 1;
 	cout.flush();
@@ -600,8 +600,8 @@ int main(int argc, char** argv)
 
 		if (Coords.empty())
 		{
-			cerr << "\n" << fl << "\nError: There is no RNA sequence in this PDB file\n" << endl;
 			cptot += 1;
+			cerr << "\n" << cptot  << " : " << "Error: There is no RNA sequence in this PDB file ("+fl+")" << endl;
 		} else {
 
 			for (int k = 0; k < Coords.size(); k++)
@@ -645,11 +645,11 @@ int main(int argc, char** argv)
 			}
 
 	if (pdbmistake) {
-		cerr << "\n" << fl << "\nWarning: Potential badly written text in the PDB file\n" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 		cpt += 1; cptot += 1;
+		cerr << "\n" << cptot  << " : " << "\nWarning: Potential badly written text in the PDB file ("+fl+")" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
-		cerr << "\n" << fl << "\nWarning (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles\n" <<endl;
 		cptot += 1;
+		cerr << "\n" << cptot  << " : " << "\nWarning (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles ("+fl+")" << endl;
 	} else {
 	cpt +=1; cptot += 1;
 	cout.flush();

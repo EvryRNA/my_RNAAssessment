@@ -175,30 +175,41 @@ string ftsround(float num, int deci){  // For round correctly distance values
 int main(int argc, char** argv)
 {
     string optlist =
-		"   Usage:\n"
-		"   ./distance_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-m MAX_DIST] [-R] \n\n"
-		"   Options:\n"
-		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
-		"   -l   string   List of all PDB files you want to be processed\n"
-		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
-		"                 is automatically add to the output file name that you chose\n"
-		"   -R            Calculation of the distances for RNA structures (Using atoms C4')\n"
-        	"   -m   float      Maximum interatomic distance (Å) (default=15.0)\n"          
-		"   -h            Help\n\n";
+        "   Usage:\n"
+        "   ./distance_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-R] [-m MIN_DIST]\n"
+        "                          [-M MAX_DIST] [-i MIN_SEQ_SEPARATION] [-j MAX_SEQ_SEPARATION]\n\n"
+        "   Options:\n"
+        "   -d   string   Pathway of the repository where PDB files you interested of are\n"
+        "   -l   string   List of all PDB files you want to be processed\n"
+        "   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
+        "                 is automatically add to the output file name that you chose\n"
+        "   -R            Calculation of the distances for RNA structures (Using atoms C4')\n\n"
+        "   Additional options:\n"
+        "   -i   int      Minimum number of positions separating the residue pair (default=4)\n"
+        "   -j   int      Maximum number of positions separating the residue pair\n"
+        "   -m   float    Minimum interatomic distance (Å) (default=0.0)\n"
+        "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"          
+        "   -h            Help\n\n";
 
     string in_dir;    // Pathway of the repository
     string listpdb;   // File containing PDB files list
     string output = "Distances";    // Output file name without extension (".txt",".out",etc...)
+    int Min = 4;   // Minimum positions between 2 residues
+    int Max = 6000;   //  Maximum positions between 2 residues (Max >> any chain size)
+    float mindist = 0.0;
     float maxdist = 15.0;
     bool Rna = false;
 
     int opt;
-    while ((opt = getopt(argc,argv, "hRd:l:o:m:")) != EOF){
+    while ((opt = getopt(argc,argv, "hRd:l:o:i:j:m:M:")) != EOF){
         switch(opt){
             case 'd': in_dir = optarg; break;
             case 'l': listpdb = optarg; break;
             case 'o': output = optarg; break;
-            case 'm': maxdist = stof(optarg); break;
+            case 'i': Min = stoi(optarg); break;
+            case 'j': Max = stoi(optarg); break;
+            case 'm': mindist = stof(optarg); break;
+            case 'M': maxdist = stof(optarg); break;
             case 'R': Rna = true; break;
             case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
         }
@@ -208,6 +219,12 @@ int main(int argc, char** argv)
     if (listpdb.empty() and output.empty()){ cerr << "Error (argument) : Missing -l and -o arguments\n" << endl; return 1;}
     if (listpdb.empty()){ cerr << "Error (argument) : Missing -l argument\n" << endl; return 1;}
     if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
+    if (mindist > maxdist){ cerr << "\nError (user) : -M argument must be greater than -m argument\n" << endl; return 1; }
+    if (mindist < 0){ cerr << "\nError (user) : -m argument cannot be negative\n" << endl; return 1; }
+    if (maxdist < 0){ cerr << "\nError (user) : -M argument cannot be negative\n" << endl; return 1; }
+    if (Min > Max){ cerr << "\nError (user) : -j argument must be greater than -i argument\n" << endl; return 1; }
+    if (Min < 0){ cerr << "\nError (user) : -i argument cannot be negative\n" << endl; return 1; }
+    if (Max < 0){ cerr << "\nError (user) : -J argument cannot be negative\n" << endl; return 1; }
 
     if (!Rna)
     {
@@ -242,20 +259,24 @@ int main(int argc, char** argv)
 
             if (Coords.empty())
             {
-                cerr << "\n" << fl << "\nError: There is no protein sequence in this PDB file" << endl;
                 cptot += 1;
+                cerr << "\n" << cptot  << " : " << "Error: There is no protein sequence in this PDB file ("+fl+")" << endl;
             } else {
 
-            for (int k = 0; k < Coords.size(); k++)
+            for (int k = 0; k < Coords.size(); k++)   // Chains
             {
-                if (Coords[k].size() >= 5)
+                if (Coords[k].size() >= Min+1)
                 {
-                    for (int i = 0; i < Coords[k].size()-4; i+=1)
+                    int lenseq;
+                    if (Coords[k].size() < Max){
+                    	lenseq = Coords[k].size();
+                    } else { lenseq = Max;}
+                    for (int i = 0; i < lenseq-Min; i+=1)   // Residues
                     {
-                        for (int j = i+4; j < Coords[k].size(); j+=1)
+                        for (int j = i+Min; j < lenseq; j+=1)
                         {
                             float Dist = distance(Coords[k][i], Coords[k][j]);
-                            if (Dist < maxdist)
+                            if ((Dist > mindist) && (Dist < maxdist))
                             {
                                 file_out << Dist << "    " << code3to1[Coords[k][i][3]]+code3to1[Coords[k][j][3]] 
                                 << "    " << fl << endl;
@@ -268,8 +289,8 @@ int main(int argc, char** argv)
             }
 
             if (cutoff) {
-                cerr << "\n" << fl << "\nWarning (chain length too short): Protein residues in insufficient number for at least 1 chain" <<endl;
                 cpt +=1; cptot += 1;
+                cerr << "\n" << cpt << " : "  << "Warning (chain length too short): Protein residues in insufficient number for at least 1 chain ("+fl+")" << endl;
             } else {
                 cpt +=1; cptot += 1;
                 cout.flush();
@@ -310,20 +331,24 @@ int main(int argc, char** argv)
 
             if (Coords.empty())
             {
-                cerr << "\n" << fl << "\nError: There is no RNA sequence in this PDB file" << endl;
                 cptot += 1;
+                cerr << "\n" << cptot  << " : " << "Error: There is no RNA sequence in this PDB file ("+fl+")" << endl;
             } else {
 
-            for (int k = 0; k < Coords.size(); k++)
+            for (int k = 0; k < Coords.size(); k++)   // Chains
             {
-                if (Coords[k].size() >= 5)
+                if (Coords[k].size() >= Min+1)
                 {
-                    for (int i = 0; i < Coords[k].size()-4; i+=1)
+                    int lenseq;
+                    if (Coords[k].size() < Max){
+                    	lenseq = Coords[k].size();
+                    } else { lenseq = Max;}
+                    for (int i = 0; i < lenseq-Min; i+=1)   // Residues
                     {
-                        for (int j = i+4; j < Coords[k].size(); j+=1)
+                        for (int j = i+Min; j < lenseq; j+=1)
                         {
                             float Dist = distance(Coords[k][i], Coords[k][j]);
-                            if (Dist < maxdist)
+                            if ((Dist > mindist) && (Dist < maxdist))
                             {
                                 file_out << Dist << "    " << Coords[k][i][3]+Coords[k][j][3] << "    " << fl << endl;
                             }
@@ -334,8 +359,8 @@ int main(int argc, char** argv)
             }
 
             if (cutoff) {
-                cerr << "\n" << fl << "\nWarning (chain length too short): Protein residues in insufficient number for at least 1 chain" <<endl;
-                cptot += 1;
+                cpt +=1; cptot += 1;
+                cerr << "\n" << cpt << " : "  << "Warning (chain length too short): RNA residues in insufficient number for at least 1 chain ("+fl+")" << endl;
             } else {
                 cpt +=1; cptot += 1;
                 cout.flush();
