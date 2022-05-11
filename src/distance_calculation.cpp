@@ -35,17 +35,18 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 	string line;
 	string Atom;
 	string previous_letter = " ";  // For alternates locations that don't start with A
-	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
+	string space = "";
+	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
 	string refer;  // Atoms that interest us
 	int i = -1;
 
 	if (!rna){
 		refer = "CA";  // CA and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
 		refer = "C4'";
-		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
 	ifstream fl(pdbfile);
@@ -57,14 +58,15 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 				if (refer == Atom)
 				{
 					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-					if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
+					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
+					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						previous_letter = line.substr(vrf2,1);
+						previous_letter = line.substr(16,1);
 					}else if (previous_letter == " ")
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						previous_letter = line.substr(vrf2,1);
+						previous_letter = line.substr(16,1);
 					} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
@@ -89,17 +91,18 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	string line;
 	string Atom;
 	string previous_letter = " ";  // For alternates locations that don't start with A
-	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
+	string space = "";
+	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
 	string refer;  // Atoms that interest us
 	int i = -1;
 
 	if (!rna){
 		refer = "CA";  // P and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
 		refer = "C4'";
-		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
 
@@ -112,14 +115,15 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 				if (refer == Atom)
 				{
 					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-					if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
+					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
+					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						previous_letter = line.substr(vrf2,1);
+						previous_letter = line.substr(16,1);
 					} else if (previous_letter == " ")
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						previous_letter = line.substr(vrf2,1);
+						previous_letter = line.substr(16,1);
 					} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 					{
 						add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
@@ -137,7 +141,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 				{
 					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 					add_coords(interm_tab, line, residu, Atom, occupancy, i);
-					previous_letter = line.substr(vrf2,1);
+					previous_letter = line.substr(16,1);
 				}
 			}		
 		}

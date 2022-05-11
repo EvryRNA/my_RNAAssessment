@@ -37,17 +37,18 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 	string line;
 	string Atom;
 	string previous_letter = " ";  // For alternates locations that don't start with A
-	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
+	string space = "";
+	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
 	int i = -1;
 
 	if (!rna){
 		refer = {"N ","CA","C "};  // P and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+		plc1 = 2; vrf1 = 17; plc2 = 3;  // Atom and residue parameters for protein
 	} else {
 		refer = {"P  ","C4'","C1'"};
-		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  ";  // Atom and residue parameters for RNA 18 2
 	}
 	
 	ifstream fl(pdbfile);
@@ -64,14 +65,15 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 						{
 							string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-							if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
+							string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
+							if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i);
-								previous_letter = line.substr(vrf2,1);
+								previous_letter = line.substr(16,1);
 							}else if (previous_letter == " ")
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i);
-								previous_letter = line.substr(vrf2,1);
+								previous_letter = line.substr(16,1);
 							} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 							{
 								add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
@@ -98,17 +100,18 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	string line;
 	string Atom;
 	string previous_letter = " ";  // For alternates locations that don't start with A
-	int plc1; int vrf1; int plc2; int vrf2; int plc3; // Atom and residue parameters
+	string space = "";
+	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
 	vector<string> refer;  // Atoms that interest us
 	int i = -1;
 
 	if (!rna){
 		refer = {"N ","CA","C "};  // P and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; vrf2 = 16; plc3 = 4; // Atom and residue parameters for protein
+		plc1 = 2; vrf1 = 17; plc2 = 3;  // Atom and residue parameters for protein
 	} else {
 		refer = {"P  ","C4'","C1'"};
-		plc1 = 3; vrf1 = 19; plc2 = 1; vrf2 = 18; plc3 = 2; // Atom and residue parameters for RNA
+		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  ";  // Atom and residue parameters for RNA
 	}
 	
 
@@ -126,14 +129,15 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 					if (*find(refer.begin(), refer.end(), Atom) == Atom)
 					{
 						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-						if ((line.substr(vrf2,plc3) == " "+residu)  || (line.substr(vrf2,plc3) == "A"+residu))
+						string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
+						if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i);
-							previous_letter = line.substr(vrf2,1);
+							previous_letter = line.substr(16,1);
 						} else if (previous_letter == " ")
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i);
-							previous_letter = line.substr(vrf2,1);
+							previous_letter = line.substr(16,1);
 						} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 						{
 							add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
@@ -151,7 +155,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 					{
 						string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 						add_coords(interm_tab, line, residu, Atom, occupancy, i);
-						previous_letter = line.substr(vrf2,1);
+						previous_letter = line.substr(16,1);
 					} else {
 						tab_atom.clear();
 					}
@@ -544,12 +548,12 @@ int main(int argc, char** argv)
 		cpt += 1; cptot += 1;
 		cerr << "\n" << cptot  << " : " << "Warning: Potential badly written text in the PDB file ("+fl+")" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
-		cptot += 1;
-		cerr << "\n" << cptot  << " : " << "Warning (length too short): Presence of protein residues, but in insufficient number for the calculation of their angles ("+fl+")" << endl;	
+		cpt += 1; cptot += 1;
+		cerr << "\n" << cptot  << " : " << "Warning (chain length too short): Presence of protein residues, but in insufficient number for at least 1 chain ("+fl+")" << endl;	
 	} else {
 	cpt +=1; cptot += 1;
 	cout.flush();
-    cout << "\r" << "Processed PDB files :" << cpt;}  // To see the evolution of the processing
+    cout << "\r" << "Processed PDB files :" << cptot;}  // To see the evolution of the processing
 		}
 	}
 	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl; // To see how many file was processed at the end
@@ -646,14 +650,14 @@ int main(int argc, char** argv)
 
 	if (pdbmistake) {
 		cpt += 1; cptot += 1;
-		cerr << "\n" << cptot  << " : " << "\nWarning: Potential badly written text in the PDB file ("+fl+")" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
+		cerr << "\n" << cptot  << " : " << "Warning: Potential badly written text in the PDB file ("+fl+")" << endl;  // Insert an error message if there is at least 1 written mistake in the PDB file
 	} else if (cutoff) {
-		cptot += 1;
-		cerr << "\n" << cptot  << " : " << "\nWarning (length too short): Presence of RNA residues, but in insufficient number for the calculation of their angles ("+fl+")" << endl;
+		cpt += 1; cptot += 1;
+		cerr << "\n" << cptot  << " : " << "Warning (chain length too short): Presence of RNA residues, but in insufficient number for at least 1 chain ("+fl+")" << endl;
 	} else {
 	cpt +=1; cptot += 1;
 	cout.flush();
-    cout << "\r" << "Processed PDB files :" << cpt;}
+    cout << "\r" << "Processed PDB files :" << cptot;}
 		}
 	}
 	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl;
