@@ -25,6 +25,8 @@ def get_arguments():
                         help = "File containing interatomic distances (Å)")
     parser.add_argument('-o', dest='output', type=str, default='out_prepro',
                         help = "File name of the output (file '.npz')")
+    parser.add_argument('-rna', action = 'store_true',
+                        help = "Preprocessing for values which come ​​from an RNA structure dataset")
     parser.add_argument('-max', dest='max_length', type=int, default=15,
                         help = "Maximum distance (default : 15)")
     parser.add_argument('-min', dest='min_length', type=int, default=0,
@@ -33,6 +35,8 @@ def get_arguments():
                         help = "Interval between values (default : 1.0)")
     parser.add_argument('-set_train_test', action = 'store_true',
                         help = "Get training and test sets in output from the program. Default : only data and their targets")
+    parser.add_argument('-no_mean_struct', action = 'store_true',
+                        help = "Build a set without mean structures")
 
     return parser.parse_args()
 
@@ -104,7 +108,10 @@ if __name__ == '__main__':
 
     print("Reading file "+args.distance_data+"... ", end="\r")
 
-    atompair = get_AtomPair()
+    if args.rna == True:
+        atompair = get_AtomPair(True)
+    else:
+        atompair = get_AtomPair()
 
     BINS = int((tot_len) / args.bins)
 
@@ -146,8 +153,9 @@ if __name__ == '__main__':
             altlist = [dic_pair[key] for key in dic_pair]
             count_list.append(altlist)
             y_list.append(0)
-            count_list.append(get_mean_struct(dic_pair, BINS))
-            y_list.append(1)
+            if args.no_mean_struct == False:
+                count_list.append(get_mean_struct(dic_pair, BINS))
+                y_list.append(1)
             crt_pdb = line[-1]
             dic_pair = reinit_dict(dic_pair, 0)
 
