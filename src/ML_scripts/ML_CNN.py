@@ -44,18 +44,19 @@ if __name__ == '__main__':
     # Get arguments
     args = get_arguments()
 
-    arr_data = np.load(args.datas)
+    if args.datas != None:
+        arr_data = np.load(args.datas)
 
-    # Load NPZ file data
-    if len(arr_data.files) == 4: 
-        X_train = arr_data["x_train"]
-        Y_train = arr_data["y_train"]
-        X_test = arr_data["x_test"]
-        Y_test = arr_data["y_test"]
-    else:
-        Data = arr_data["Data"]
-        Target = arr_data["Target"]
-        X_train, X_test, Y_train, Y_test = train_test_split(Data, Target, test_size=0.3,random_state=109)
+        # Load NPZ file data
+        if len(arr_data.files) == 4: 
+            X_train = arr_data["x_train"]
+            Y_train = arr_data["y_train"]
+            X_test = arr_data["x_test"]
+            Y_test = arr_data["y_test"]
+        else:
+            Data = arr_data["Data"]
+            Target = arr_data["Target"]
+            X_train, X_test, Y_train, Y_test = train_test_split(Data, Target, test_size=0.3,random_state=109)
 
     # Load a pretrained model or just the architecture of a model
     if args.load:
