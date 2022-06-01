@@ -118,7 +118,7 @@ if __name__ == '__main__':
             print("Training accuracy : {}".format(scor[1]))
         
     # Save the model weights after training in H5 file
-    if Load_w == None and args.no_weights != False:
+    if args.load_w == None and args.no_weights != False:
         if ".json" in args.save_model:
             nameW = args.save_model[0:-5]+".h5"
         else:
