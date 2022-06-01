@@ -2,6 +2,11 @@
 
 ## Dockerfile
 
+**Requirement :** This Dockerfile use the image of `tensorflow/tensorflow`. Make sure to have this image before building an image with this Dockerfile :
+```
+sudo docker pull tensorflow/tensorflow
+```
+
 To generate the Docker image from the provided Dockerfile, use the following command line when you are on this repository:
 ```
 sudo docker build -t my_rnaa .
