@@ -1,5 +1,37 @@
 # my_RNAAssessment
 
+## Dockerfile
+
+To generate the Docker image from the provided Dockerfile, use the following command line when you are on this repository:
+```
+sudo docker build -t my_rnaa .
+```
+
+From this image, you can now run your container using:
+```
+sudo docker run -it --rm my_rnaa
+```
+
+:warning: The `--rm` option causes the container and its contents to be deleted when it is stopped.
+
+Once the container is running, 2 volumes (`data` and `results`) are created at the pathway `/var/lib/docker/volumes`. It allows the communication of files and directories between the host machine and the containe.
+For example, to transfer a folder from the host machine to the container, you will need to enter in a second terminal a command like:
+```
+sudo cp -r /pathway/of/my/folder/ /var/lib/docker/volumes/random_volume_name/_data/.
+```
+
+*Help :* `random_volume_name` *can be find using* `sudo ls /var/lib/docker/volumes`.
+
+Your folder will be copied in one of the 2 volume directories of your container.
+You can also recover the files or folders contained in this container by copying them to one of these directories, then executing the following type of command in the second terminal :
+```
+sudo cp -r /var/lib/docker/volumes/random_volume_name/_data/folder /pathway/of/my/host/machine/folder/ 
+```
+
+For more information about the use of Docker :
+- [How to install Docker](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04-fr)
+- [Start to use and understand Docker](https://takacsmark.com/dockerfile-tutorial-by-example-dockerfile-best-practices-2018/)
+
 ## Programs
 
 ### Downloader.py
