@@ -189,4 +189,3 @@
 6QN3.pdb
 6R47.pdb
 6UFG.pdb
-README.md

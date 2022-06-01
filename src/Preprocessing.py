@@ -34,7 +34,7 @@ def get_arguments():
     parser.add_argument('-bins', dest='bins', type=float, default=1.0,
                         help = "Interval between values (default : 1.0)")
     parser.add_argument('-set_train_test', action = 'store_true',
-                        help = "Get training and test sets in output from the program. Default : only data and their targets")
+                        help = "Get training and test sets in output of the program. Default : only data and their targets")
     parser.add_argument('-no_mean_struct', action = 'store_true',
                         help = "Build a set without mean structures")
 
@@ -175,6 +175,8 @@ if __name__ == '__main__':
     print("Preprocessing done !")
     X = np.asarray(count_list)
     Y = np.asarray(y_list)
+
+    print("Dimension of the data table : "+str(X.shape))
 
     if args.set_train_test == True:
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3,random_state=109) # 70% training and 30% test

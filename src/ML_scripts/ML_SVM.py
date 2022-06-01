@@ -21,7 +21,7 @@ def get_arguments():
     """Retrieves the arguments of the program"""
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('-D', dest='datas', type=isfile, required=True,
+    parser.add_argument('-D', dest='datas', type=isfile,
                         help = "File (*.npz) containing RNA or Protein structures (output of 'Preprocessing.py')")
     parser.add_argument('-load', dest='load', type=isfile,
                         help = "File containing pretrained SVM model")
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     if args.predict:
         arr_pred = np.load(args.predict)
-        data_pred = arr_pred["Data"]  # ajouter une condition si pas 'Data'
+        data_pred = arr_pred["Data"]
 
         d1, d2, d3 = data_pred.shape
         my_data = data_pred.reshape(d1, d2*d3)

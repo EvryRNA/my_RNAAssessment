@@ -20,7 +20,7 @@ def get_arguments():
     """Retrieves the arguments of the program"""
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('-D', dest='datas', type=isfile, required=True,
+    parser.add_argument('-D', dest='datas', type=isfile,
                         help = "File (*.npz) containing RNA or Protein structures (output of 'Preprocessing.py')")
     parser.add_argument('-load', dest='load', type=isfile,
                         help = "File containing architecture of a CNN model")
@@ -64,6 +64,7 @@ if __name__ == '__main__':
                 file_json = line
         model = keras.models.model_from_json(file_json)
         model.summary()
+        print("\n")
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
         if args.load_w:
             model.load_weights(args.load_w)
@@ -89,6 +90,7 @@ if __name__ == '__main__':
         model = keras.Model(inputs, outputs)
 
         print(model.summary())
+        print("\n")
 
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
@@ -108,13 +110,15 @@ if __name__ == '__main__':
             Y_train = np.concatenate((Y_train, Y_test))
 
             history = model.fit(X_train, Y_train, validation_split= 0.3, epochs= 10)
+            print("\n")
         else:                     # Training with 70%, check accuracy with 30%
             history = model.fit(X_train, Y_train, validation_split= 0.3, epochs= 10)
+            print("\n")
             scor = model.evaluate(X_test, Y_test)
             print("Training accuracy : {}".format(scor[1]))
         
     # Save the model weights after training in H5 file
-    if args.no_weights != False:
+    if Load_w == None and args.no_weights != False:
         if ".json" in args.save_model:
             nameW = args.save_model[0:-5]+".h5"
         else:
@@ -124,7 +128,7 @@ if __name__ == '__main__':
 
     if args.predict:
         arr_pred = np.load(args.predict)
-        my_data = arr_pred["Data"]  # ajouter une condition si pas 'Data'
+        my_data = arr_pred["Data"]
 
         y_pred = model.predict(my_data)
         with open(args.output, 'w') as out:
