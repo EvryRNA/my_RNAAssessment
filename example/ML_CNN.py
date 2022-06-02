@@ -130,7 +130,7 @@ if __name__ == '__main__':
         else:
             nameW = args.load[0:-5]+".h5"
         model.save_weights(nameW)
-        print("Model weights save in file : "+nameW     
+        print("Model weights save in file : "+nameW)     
 
     # Assign scores
     if args.predict:
