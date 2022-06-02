@@ -91,6 +91,7 @@ if __name__ == '__main__':
         job_dump(clf, args.save_model)
         print("Model save in file : "+args.save_model)
 
+    # Assign scores
     if args.predict:
         arr_pred = np.load(args.predict)
         data_pred = arr_pred["Data"]

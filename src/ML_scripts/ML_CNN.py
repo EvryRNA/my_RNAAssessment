@@ -122,13 +122,17 @@ if __name__ == '__main__':
         
     # Save the model weights after training in H5 file
     if args.load_w == None and args.no_weights != False:
-        if ".json" in args.save_model:
-            nameW = args.save_model[0:-5]+".h5"
+        if args.load == None:
+            if ".json" in args.save_model:
+                nameW = args.save_model[0:-5]+".h5"
+            else:
+                nameW = args.save_model+".h5"
         else:
-            nameW = args.save_model+".h5"
+            nameW = args.load[0:-5]+".h5"
         model.save_weights(nameW)
-        print("Model weights save in file : "+nameW)     
+        print("Model weights save in file : "+nameW     
 
+    # Assign scores
     if args.predict:
         arr_pred = np.load(args.predict)
         my_data = arr_pred["Data"]
