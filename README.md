@@ -1,5 +1,9 @@
 # my_RNAAssessment
 
+## Dependencies
+
+You can see all dependencies (tools or packages used) with their corresponding versions in the [DEPENDENCY](https://github.com/FranGASTRIN/my_RNAAssessment/blob/main/DEPENDENCY) file.
+
 ## Dockerfile
 
 **Requirement :** This Dockerfile use the image of `tensorflow/tensorflow`. Make sure to have this image before building an image with this Dockerfile :
@@ -40,8 +44,6 @@ For more information about the use of Docker :
 ## Programs
 
 ### Downloader.py
-
-**Dependency : urllib**
 
 Allows the user to download a list of PDB files, if he has one, in the format:
 ```
