@@ -61,11 +61,14 @@ The trained model will be load, giving to you the possibility to assign scores w
 python3 ML_CNN.py -load CNN_model.json -load_weights CNN_model.h5 -pred rna_pp_test.npz
 ```
 
-Option `-load_weights` will load the weights from a H5 file for the corresponding model's architecture from a JSON file. Than, this pre-trained model can be used to assign scores
+Option `-load_weights` will load the weights from a H5 file for the corresponding model's architecture from a JSON file. Than, this pre-trained model can be used to assign scores.
 
 **Loading without weights (train a model) :**
 
 If you remove option `-load_weights`, you will load the model's architecture (JSON file) and start a new training, using this architecture, before assign scores.
 ```
-python3 ML_CNN.py -load CNN_model.json -pred rna_pp_test.npz
+python3 ML_CNN.py -D rna_pp_train.npz -load CNN_model.json -pred rna_pp_test.npz
 ```
+## More informations
+- To customize settings for training models with the Scikit-learn package ([SVM](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and [Random Forest](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)), you can go on the web page of the 2 tools to have all the information on them.
+- To have information about the [CNN](https://keras.io/api/layers/convolution_layers/convolution1d/) used in the script, or more, you can go on the website of Keras [here](https://keras.io/api/).
