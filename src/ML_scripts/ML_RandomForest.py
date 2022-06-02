@@ -70,8 +70,12 @@ if __name__ == '__main__':
 
     # Train a new model
     else:
-        """ Parameters of the Random Forest object can be changed at any moment by user to optimize learning """ 
+   #""" Parameters of the Random Forest object can be changed at any moment by user to optimize learning """#
+#************************************************************************************************************#
+
         clf = RandomForestClassifier()  # Initialize a Random Forest classifier
+        
+#************************************************************************************************************#
 
         if args.test == False:    # Training with 100% of the dataset
             X_train = np.concatenate((xtrain, xtest))

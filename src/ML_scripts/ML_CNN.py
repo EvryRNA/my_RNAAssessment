@@ -75,7 +75,8 @@ if __name__ == '__main__':
 
     # Train a new model
     else:
-        """ Layers/parameters of the CNN model can be changed at any moment by user to optimize learning """ 
+   #""" Layers/parameters of the CNN model can be changed at any moment by user to optimize learning """# 
+#**********************************************************************************************************#
         T1, T2, T3 = X_train.shape
         
         inputs = layers.Input(shape=(T2, T3))
@@ -94,6 +95,7 @@ if __name__ == '__main__':
         print("\n")
 
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+#**********************************************************************************************************#
 
         # Save the model architecture in a json file
         if ".json" not in args.save_model:

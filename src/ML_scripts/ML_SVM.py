@@ -70,8 +70,12 @@ if __name__ == '__main__':
 
     # Train a new model
     else:
-        """ Parameters of the SVM object can be changed at any moment by user to optimize learning """ 
+    #""" Parameters of the SVM object can be changed at any moment by user to optimize learning """# 
+#**********************************************************************************************************#
+
         clf = svm.SVC(kernel='linear', probability=True)  # 'probability' have to stay 'True'
+        
+#**********************************************************************************************************#
 
         if args.test == False:    # Training with 100% of the dataset
             X_train = np.concatenate((xtrain, xtest))
