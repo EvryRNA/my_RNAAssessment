@@ -134,7 +134,7 @@ if __name__ == '__main__':
         y_pred = model.predict(my_data)
         with open(args.output, 'w') as out:
             for i in range(0,len(y_pred),1):
-                out.write(str(y_pred[i])+'\n')
+                out.write(str(y_pred[i][0])+'\n')
 
         print("Scores saved in file : "+args.output)
 
