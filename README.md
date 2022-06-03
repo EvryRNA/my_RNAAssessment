@@ -85,3 +85,14 @@ To apply this program to a list of RNA PDB files (eta/theta), you can use the pr
 You can also access to the pseudotorsion angle values **eta'** and **theta'** using options `-Ra` or `-RA` instead of option `-R`.
 
 There are also few more options that we leave it to the user to discover them by himself with the help option `-h`, like `-O` option to add the Omega torsion angle values for proteins, just to name one of them. 
+
+### distance_calculation
+The 2 command lines above used for `angle_calculation` can also be apply for this second program. Furthermore, this program provide other options for distance values :
+
+```
+./distance_calculation -d dataset_pathway/ -l list_RNA_PDB.txt -o output_RNA_file -R -m 5 -M 30
+```
+
+With this command line, for example, the user choose to keep all the values that are greater than 5Å and smaller than 30Å.
+
+This repository also provide an [example](https://github.com/FranGASTRIN/my_RNAAssessment/tree/main/example) to know how to use the other tools for scoring structures by Machine Learning methods.
