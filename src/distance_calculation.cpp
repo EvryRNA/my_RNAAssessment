@@ -29,7 +29,7 @@ void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, str
 }
 
 
-vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool rna = false){
+vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, string Atref, bool rna = false){
 	vector<vector<vector<string> >> tableau;         // Atomic coordinates ('main' dimension)
 	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
 	string line;
@@ -38,26 +38,30 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 	string space = "";
 	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
+	string Reference;
 	string refer;  // Atoms that interest us
+	string residu;
 	int i = -1;
 
 	if (!rna){
-		refer = "CA";  // CA and C4' for RNA
+		Reference = Atref;  // CA and C4' for RNA
 		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
-		refer = "C4'";
+		Reference = Atref.substr(0,2)+"'";
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
 	ifstream fl(pdbfile);
 	while(getline(fl, line)){
+        refer = Reference;
 		if (line.substr(0,4) == "ATOM"){
 			if (chain == line.substr(21,1))  // Chain selected
 			{
 				Atom = line.substr(13,plc1);
+				residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
+				if (residu == "GLY"){ refer = "CA";}
 				if (refer == Atom)
 				{
-					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
 					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
@@ -84,7 +88,7 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, bool
 
 
 /**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
-vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
+vector<vector<vector<string> >> coord_pdb(string pdbfile, string Atref, bool rna = false){
 	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
 	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
@@ -94,27 +98,31 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 	string space = "";
 	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
+	string Reference;
 	string refer;  // Atoms that interest us
+	string residu;
 	int i = -1;
 
 	if (!rna){
-		refer = "CA";  // P and C4' for RNA
+		Reference = Atref;  // P and C4' for RNA
 		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
-		refer = "C4'";
+		Reference = Atref.substr(0,2)+"'";
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
 
 	ifstream fl(pdbfile);
 	while(getline(fl, line)){
+		refer = Reference;
 		if (line.substr(0,4) == "ATOM"){
 			Atom = line.substr(13,plc1);
+			residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
+			if (residu == "GLY"){ refer = "CA";}
 			if (tab_chain.back() == line.substr(21,1))  // If still in the same chain
 			{
 				if (refer == Atom)
 				{
-					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
 					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
 					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
@@ -192,12 +200,15 @@ int main(int argc, char** argv)
         "   -i   int      Minimum number of positions separating the residue pair (default=4)\n"
         "   -j   int      Maximum number of positions separating the residue pair\n"
         "   -m   float    Minimum interatomic distance (Å) (default=0.0)\n"
-        "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"          
+        "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"
+        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta) [Protein, default=CA]\n"
+        "                                       C4p (C4'), C1p (C1') [RNA, default=C4p]\n"         
         "   -h            Help\n\n";
 
     string in_dir;    // Pathway of the repository
     string listpdb;   // File containing PDB files list
     string output = "Distances";    // Output file name without extension (".txt",".out",etc...)
+    string carbref = "CA";   // Reference atom
     int Min = 4;   // Minimum positions between 2 residues
     int Max = 6000;   //  Maximum positions between 2 residues (Max >> any chain size)
     float mindist = 0.0;
@@ -205,11 +216,12 @@ int main(int argc, char** argv)
     bool Rna = false;
 
     int opt;
-    while ((opt = getopt(argc,argv, "hRd:l:o:i:j:m:M:")) != EOF){
+    while ((opt = getopt(argc,argv, "hRc:d:l:o:i:j:m:M:")) != EOF){
         switch(opt){
             case 'd': in_dir = optarg; break;
             case 'l': listpdb = optarg; break;
             case 'o': output = optarg; break;
+            case 'c': carbref = optarg; break;
             case 'i': Min = stoi(optarg); break;
             case 'j': Max = stoi(optarg); break;
             case 'm': mindist = stof(optarg); break;
@@ -219,10 +231,27 @@ int main(int argc, char** argv)
         }
     }
 
+    vector<string> protref = {"CA","CB"};
+    vector<string> rnaref = {"C4p","C1p"};
+
     if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
-    if (listpdb.empty() and output.empty()){ cerr << "Error (argument) : Missing -l and -o arguments\n" << endl; return 1;}
-    if (listpdb.empty()){ cerr << "Error (argument) : Missing -l argument\n" << endl; return 1;}
-    if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
+    if (listpdb.empty() and output.empty()){ cerr << "\nError (argument) : Missing -l and -o arguments\n" << endl; return 1;}
+    if (listpdb.empty()){ cerr << "\nError (argument) : Missing -l argument\n" << endl; return 1;}
+    if (output.empty()){ cerr << "\nError (argument) : Missing -o argument\n" << endl; return 1;}
+    if (Rna)
+    {
+    	if (carbref == protref[0]) { carbref = "C4p";}
+    	else if (carbref == protref[1])
+    	{ cerr << "\nError (user) : -c argument (CB) not available for RNA mode \n" << endl; return 1;}
+        else if ((carbref != rnaref[0]) and (carbref != rnaref[1])){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+    }
+    if (!Rna)
+    {
+    	if (carbref == rnaref[0]) { carbref = "CA"; cerr << "\nWarning : -c argument (C4p) not available for Protein mode. Default use : CA\n" << endl;}
+    	else if (carbref == rnaref[1])
+    	{ cerr << "\nError (user) : -c argument (C1p) not available for Protein mode \n" << endl; return 1;}
+        else if ((carbref != protref[0]) and (carbref != protref[1])){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+    }
     if (mindist > maxdist){ cerr << "\nError (user) : -M argument must be greater than -m argument\n" << endl; return 1; }
     if (mindist < 0){ cerr << "\nError (user) : -m argument cannot be negative\n" << endl; return 1; }
     if (maxdist < 0){ cerr << "\nError (user) : -M argument cannot be negative\n" << endl; return 1; }
@@ -255,11 +284,11 @@ int main(int argc, char** argv)
 
             if ((fl.size() == 9) || (fl.size() == 5))
             {
-                Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
+                Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), carbref);
             } else if (fl.size() == 4){
-                Coords = coord_pdb(in_dir+fl+".pdb");
+                Coords = coord_pdb(in_dir+fl+".pdb", carbref);
             } else {
-                Coords = coord_pdb(in_dir+fl);}  // 3D vector {Chain[Atom[informations]]}
+                Coords = coord_pdb(in_dir+fl, carbref);}  // 3D vector {Chain[Atom[informations]]}
 
             if (Coords.empty())
             {
@@ -327,11 +356,11 @@ int main(int argc, char** argv)
 
             if ((fl.size() == 9) || (fl.size() == 5))
             {
-                Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), true);
+                Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), carbref, true);
             } else if (fl.size() == 4){
-                Coords = coord_pdb(in_dir+fl+".pdb", true);
+                Coords = coord_pdb(in_dir+fl+".pdb", carbref, true);
             } else {
-                Coords = coord_pdb(in_dir+fl, true);}  // 3D vector {Chain[Atom[informations]]}
+                Coords = coord_pdb(in_dir+fl, carbref, true);}  // 3D vector {Chain[Atom[informations]]}
 
             if (Coords.empty())
             {
