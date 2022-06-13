@@ -1,5 +1,8 @@
 import argparse, os, sys
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 __doc__ = "Preprocessing program for data obtained at the output of the 'distance_calculation' program for Machine Learning methods use"
@@ -34,9 +37,11 @@ def get_arguments():
     parser.add_argument('-bins', dest='bins', type=float, default=1.0,
                         help = "Interval between values (default : 1.0)")
     parser.add_argument('-set_train_test', action = 'store_true',
-                        help = "Get training and test sets in output of the program. Default : only data and their targets")
+                        help = "Get training and test sets in output from the program. Default : only data and their targets")
     parser.add_argument('-no_mean_struct', action = 'store_true',
                         help = "Build a set without mean structures")
+    parser.add_argument('-hmap', action = 'store_true',
+                        help = "Heatmap of the data")
 
     return parser.parse_args()
 
@@ -58,6 +63,15 @@ def get_AtomPair(RNA = False):
             for j in range(i, len(rna_atom), 1):
                 atom_pair.append(rna_atom[i]+rna_atom[j])
 
+    return atom_pair
+
+
+def get_bins(Min = 0, Max = 15, interv = 1):
+    atom_pair = []
+    j = Min
+    while j <= Max-interv:
+        atom_pair.append(str(j)+"-"+str(j+interv))
+        j += interv
     return atom_pair
 
 
@@ -172,19 +186,41 @@ if __name__ == '__main__':
             else:
                 sys.stderr.write("Warning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
 
-    # For the last PDB of the list
-    altlist = [dic_pair[key] for key in dic_pair]
-    count_list.append(altlist)
-    y_list.append(0)
-    if args.no_mean_struct == False:
-        count_list.append(get_mean_struct(dic_pair, BINS))
-        y_list.append(1)
-
     print("Preprocessing done !")
     X = np.asarray(count_list)
     Y = np.asarray(y_list)
 
-    print("Dimension of the data table : "+str(X.shape))
+    if args.hmap == True:
+        my_bins = get_bins(args.min_length, args.max_length, args.bins)
+        
+        mytable = []
+        T1, T2, T3 = X.shape
+
+        for i in range(0, T2, 1):
+          aamean = []
+          for j in range(0, T3, 1):
+            aaI = []
+            for k in range(0, T1, 1):
+              if Y[k] != 1:
+                aaI.append(X[k][i][j])
+            aamean.append(sum(aaI))
+          mytable.append(aamean)
+
+        AA_table = pd.DataFrame(mytable, columns=my_bins, index=atompair)
+        
+        if args.rna != True:
+            sns.set(rc={"figure.figsize":(20, 20)})
+        else:
+            sns.set(rc={"figure.figsize":(15, 5)})
+        sns.heatmap(AA_table, center=AA_table.max().max()/2)
+        plt.xticks(rotation=45)
+        plt.xlabel('Distance (Å)')
+        plt.ylabel('Atom pairs')
+        plt.title('Heatmap '+args.output, fontsize = 20)
+        plt.tight_layout()   # To not have trimmed plot
+        plt.savefig('Heatmap_'+args.output+'.png', dpi=300)
+        
+        print("Heatmap figure saved in file : Heatmap_"+args.output+".png")
 
     if args.set_train_test == True:
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3,random_state=109) # 70% training and 30% test
