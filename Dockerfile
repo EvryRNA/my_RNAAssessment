@@ -6,7 +6,8 @@ FROM tensorflow/tensorflow
 RUN apt update -y && \
     apt install vim -y && \
     apt install git -y && \
-    pip3 install sklearn
+    pip3 install sklearn && \
+    pip3 install seaborn
 
 # To have a clean environment to work     
 WORKDIR home
