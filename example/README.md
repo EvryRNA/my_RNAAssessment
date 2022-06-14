@@ -28,6 +28,15 @@ These 2 commands will generate 2 files ".npz" (files of numpy array), containing
 
 :warning: **Important :** For the example, we used datasets of RNA structures. If you want to do the same with protein structures, you just need to erase the flags `-R` and `-rna` for the 2 programs, `./distance_calculation` and `Preprocessing.py` respectively.
 
+It is also possible to see the profile of your data, by plotting the heatmap, using the option `-hmap`. This will generate in output a PNG file containing the heatmap of your data, in addition to the file '.npz'. Tipically, you can have this using :
+
+**Input**
+```
+python3 Preprocessing.py -D Distance_trainset.txt -o rna_pp_train -rna -set_train_test -hmap
+```
+**Output:**
+![heatmap](https://github.com/FranGASTRIN/my_RNAAssessment/blob/main/img/Heatmap_rna_pp_train.png)
+
 ## Step 3 - Machine Learning scripts
 
 ### Training and prediction
