@@ -190,6 +190,8 @@ if __name__ == '__main__':
     X = np.asarray(count_list)
     Y = np.asarray(y_list)
 
+    print("Dimension of the data table : "+str(X.shape))
+
     if args.hmap == True:
         my_bins = get_bins(args.min_length, args.max_length, args.bins)
         
