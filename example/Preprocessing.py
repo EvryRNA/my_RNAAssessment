@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     for line in file2vec:
         if line[-1] == crt_pdb:
-            val = round(float(line[0])) 
+            val = float(line[0]) 
             if val > args.max_length or val < args.min_length:
                 continue
             if val == args.max_length: 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
             crt_pdb = line[-1]
             dic_pair = reinit_dict(dic_pair, 0)
 
-            val = round(float(line[0])) 
+            val = float(line[0]) 
             if val > args.max_length or val < args.min_length:
                 continue
             if val == args.max_length: 
