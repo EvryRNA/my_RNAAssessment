@@ -1,6 +1,6 @@
 # my_rnaa.sh
 
-You can execute all the programs (with their basic options), from the raw structures to scored structures, by using one of the following command lines.
+You can execute all the programs (with their basic options), from the raw structures to scored structures (with ML_CNN.py), by using one of the following command lines.
 
 **For proteins**
 
