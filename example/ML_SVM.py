@@ -99,10 +99,10 @@ if __name__ == '__main__':
         d1, d2, d3 = data_pred.shape
         my_data = data_pred.reshape(d1, d2*d3)
 
-        y_pred = clf.predict_proba(my_data)
+        y_pred = clf.decision_function(my_data)
         with open(args.output, 'w') as out:
             for i in range(0,len(y_pred),1):
-                out.write(str(y_pred[i][1])+'\n')
+                out.write(str(y_pred[i])+'\n')
 
         print("Scores saved in file : "+args.output)
 
