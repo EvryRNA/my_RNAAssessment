@@ -5,9 +5,24 @@
 #include <cstring>  // stof()
 #include <vector>
 #include <cmath>
+#include <algorithm> // find()
 #include <getopt.h>  // add options
 
 using namespace std;
+
+// Protein all atoms
+
+vector<string> set_prot_allatom(){
+    vector<string> atypes = {"C  ", "CA ", "CB ", "N  ", "O  ", "SG ", "CG ", "OD1", "OD2", "CD ", "OE1", "OE2", "CD1", "CD2", "CE1", "CE2", "CZ ", "ND1", "NE2", "CG1", "CG2", "CE ", "NZ ", "SD ", "ND2", "NE ", "NH1", "NH2", "OG ", "OG1", "CE3", "CH2", "CZ2", "CZ3", "NE1", "OH "};
+    return atypes;
+}
+
+// RNA all atoms 
+
+vector<string> set_rna_allatom(){
+    vector<string> atypes = {"C1'", "C2'", "C3'", "C4'", "C5'", "C2 ", "C4 ", "C5 ", "C6 ", "C8 ", "N1 ", "N2 ", "N3 ", "N4 ", "N6 ", "N7 ", "N9 ", "O2'", "O3'", "O4'", "O5'", "O2 ", "O4 ", "O6 ", "P  ", "OP1", "OP2"};
+    return atypes;
+}
 
 void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, string &atoms, float &occup, int &iter, bool nx_step = true){
 	string X = lines.substr(30,8);  //
@@ -29,25 +44,28 @@ void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, str
 }
 
 
-vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, string Atref, bool rna = false){
-	vector<vector<vector<string> >> tableau;         // Atomic coordinates ('main' dimension)
-	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
+vector<vector<vector<vector<string> >>> sch_coord_pdb(string pdbfile, string chain, string Atref, bool rna = false){
+	vector<vector<vector<vector<string> >>> tableau;         // Atomic coordinates ('main' dimension)
+	vector<vector<vector<string> >> interm_tab;              // Atomic coordinates for current chain
+	vector<vector<string> > residue_tab;                      // Atomic coordinates for current residue
 	string line;
 	string Atom;
 	string previous_letter = " ";  // For alternates locations that don't start with A
 	string space = "";
 	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
-	string Reference;
-	string refer;  // Atoms that interest us
+	vector<string> Reference;
+	vector<string> refer;  // Atoms that interest us
 	string residu;
 	int i = -1;
 
 	if (!rna){
-		Reference = Atref;  // CA and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
+		if (Atref == "allatom"){ Reference = set_prot_allatom();}
+		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
+		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
-		Reference = Atref.substr(0,2)+"'";
+		if (Atref == "allatom"){ Reference = set_rna_allatom();}
+		else { Reference.push_back(Atref.substr(0,2)+"'");}
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
@@ -59,26 +77,38 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, stri
 			{
 				Atom = line.substr(13,plc1);
 				residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-				if (residu == "GLY"){ refer = "CA";}
-				if (refer == Atom)
+				if ((Atref != "allatom") and (residu == "GLY")){ refer = {"CA "};}
+				if (*find(refer.begin(), refer.end(), Atom) == Atom)
 				{
 					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
 					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						add_coords(residue_tab, line, residu, Atom, occupancy, i);
 						previous_letter = line.substr(16,1);
 					}else if (previous_letter == " ")
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						add_coords(residue_tab, line, residu, Atom, occupancy, i);
 						previous_letter = line.substr(16,1);
 					} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
-					}} catch (...) { add_coords(interm_tab, line, residu, Atom, occupancy, i);}}
+						add_coords(residue_tab, line, residu, Atom, occupancy, i, false);
+					}} catch (...) { add_coords(residue_tab, line, residu, Atom, occupancy, i);}}					
 				}
 			}
 		}
 	}
+
+	
+	if (!residue_tab.empty()){ 
+	vector<vector<string> > join;
+	join.push_back(residue_tab[0]);
+	for (int i = 1; i < residue_tab.size(); i++)
+	{
+		if (residue_tab[i][5] == residue_tab[i-1][5]){ join.push_back(residue_tab[i]);}    // 4D vector
+		else { interm_tab.push_back(join); join.clear(); join.push_back(residue_tab[i]);}  // {Chain[Residue[Atom[informations]]]}
+
+	}interm_tab.push_back(join);}
+	
 	if (!interm_tab.empty())             // Stock atomic coordinates for the last chain
 	{                                    // in the main vector
 		tableau.push_back(interm_tab);   //
@@ -88,9 +118,10 @@ vector<vector<vector<string> >> sch_coord_pdb(string pdbfile, string chain, stri
 
 
 /**** Store the coordinates of the atoms we are interested in for 1 PDB file ****/
-vector<vector<vector<string> >> coord_pdb(string pdbfile, string Atref, bool rna = false){
-	vector<vector<vector<string> >> tableau;         // Atomic coordinates for all chains
-	vector<vector<string> > interm_tab;              // Atomic coordinates for current chain
+vector<vector<vector<vector<string> >>> coord_pdb(string pdbfile, string Atref, bool rna = false){
+	vector<vector<vector<vector<string> >>> tableau;         // Atomic coordinates ('main' dimension)
+	vector<vector<vector<string> >> interm_tab;              // Atomic coordinates for current chain
+	vector<vector<string> > residue_tab;                      // Atomic coordinates for current residue
 	vector<string> tab_chain = {"A"};               // To know in which chain we are currently (start with "A")
 	string line;
 	string Atom;
@@ -98,16 +129,18 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, string Atref, bool rna
 	string space = "";
 	int plc1; int vrf1; int plc2;  // Atom and residue parameters
 	float occupancy;
-	string Reference;
-	string refer;  // Atoms that interest us
+	vector<string> Reference;
+	vector<string> refer;  // Atoms that interest us
 	string residu;
 	int i = -1;
 
 	if (!rna){
-		Reference = Atref;  // P and C4' for RNA
-		plc1 = 2; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
+		if (Atref == "allatom"){ Reference = set_prot_allatom();}
+		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
+		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
-		Reference = Atref.substr(0,2)+"'";
+		if (Atref == "allatom"){ Reference = set_rna_allatom();}
+		else { Reference.push_back(Atref.substr(0,2)+"'");}
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
 	
@@ -118,42 +151,64 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, string Atref, bool rna
 		if (line.substr(0,4) == "ATOM"){
 			Atom = line.substr(13,plc1);
 			residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-			if (residu == "GLY"){ refer = "CA";}
+			if ((Atref != "allatom") and (residu == "GLY")){ refer = {"CA "};}
 			if (tab_chain.back() == line.substr(21,1))  // If still in the same chain
 			{
-				if (refer == Atom)
+				if (*find(refer.begin(), refer.end(), Atom) == Atom)
 				{
 					string ver_res = space+residu;  // for RNA alter. residue (ex: 'B  G')
 					if ((line.substr(16,4) == " "+ver_res)  || (line.substr(16,4) == "A"+ver_res))
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						add_coords(residue_tab, line, residu, Atom, occupancy, i);
 						previous_letter = line.substr(16,1);
 					} else if (previous_letter == " ")
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i);
+						add_coords(residue_tab, line, residu, Atom, occupancy, i);
 						previous_letter = line.substr(16,1);
 					} else { try { if (stof(line.substr(54,6)) > occupancy)  // Compare the occupancy if there is RAL
 					{
-						add_coords(interm_tab, line, residu, Atom, occupancy, i, false);
-					}} catch (...) { add_coords(interm_tab, line, residu, Atom, occupancy, i);}}
+						add_coords(residue_tab, line, residu, Atom, occupancy, i, false);
+					}} catch (...) { add_coords(residue_tab, line, residu, Atom, occupancy, i);}}
 				}
 			} else {
 				tab_chain.push_back(line.substr(21,1));       // Chain changing
+				
+				if (!residue_tab.empty()){ 
+				vector<vector<string> > join;
+				join.push_back(residue_tab[0]);
+				for (int i = 1; i < residue_tab.size(); i++)
+				{
+					if (residue_tab[i][5] == residue_tab[i-1][5]){ join.push_back(residue_tab[i]);}    // 4D vector
+					else { interm_tab.push_back(join); join.clear(); join.push_back(residue_tab[i]);}  // {Chain[Residue[Atom[informations]]]}
+					
+				}interm_tab.push_back(join); residue_tab.clear();}
+				
 				if (!interm_tab.empty())             // Avoid to stock an empty vector if the
 				{                                    // first chain is not "A"
 					tableau.push_back(interm_tab);   // Otherwise stock atomic coordinates of
 					interm_tab.clear();              // previous chain in the main vector
 				}
 				i = -1;
-				if (refer == Atom)
+				if (*find(refer.begin(), refer.end(), Atom) == Atom)
 				{
 					string residu = line.substr(vrf1,plc2);  // Residue name (3 letters -> protein ; 1 letter -> RNA)
-					add_coords(interm_tab, line, residu, Atom, occupancy, i);
+					add_coords(residue_tab, line, residu, Atom, occupancy, i);
 					previous_letter = line.substr(16,1);
 				}
 			}		
 		}
 	}
+	
+	if (!residue_tab.empty()){ 
+	vector<vector<string> > join;
+	join.push_back(residue_tab[0]);
+	for (int i = 1; i < residue_tab.size(); i++)
+	{
+		if (residue_tab[i][5] == residue_tab[i-1][5]){ join.push_back(residue_tab[i]);}
+		else { interm_tab.push_back(join); join.clear(); join.push_back(residue_tab[i]);}
+		
+	}interm_tab.push_back(join);}
+	
 	if (!interm_tab.empty())             // Stock atomic coordinates for the last chain
 	{                                    // in the main vector
 		tableau.push_back(interm_tab);   //
@@ -231,8 +286,8 @@ int main(int argc, char** argv)
         }
     }
 
-    vector<string> protref = {"CA","CB"};
-    vector<string> rnaref = {"C4p","C1p"};
+    vector<string> protref = {"CA","CB","allatom"};
+    vector<string> rnaref = {"C4p","C1p","allatom"};
 
     if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
     if (listpdb.empty() and output.empty()){ cerr << "\nError (argument) : Missing -l and -o arguments\n" << endl; return 1;}
@@ -243,14 +298,14 @@ int main(int argc, char** argv)
     	if (carbref == protref[0]) { carbref = "C4p";}
     	else if (carbref == protref[1])
     	{ cerr << "\nError (user) : -c argument (CB) not available for RNA mode \n" << endl; return 1;}
-        else if ((carbref != rnaref[0]) and (carbref != rnaref[1])){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+        else if (!(*find(rnaref.begin(), rnaref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
     }
     if (!Rna)
     {
     	if (carbref == rnaref[0]) { carbref = "CA"; cerr << "\nWarning : -c argument (C4p) not available for Protein mode. Default use : CA\n" << endl;}
     	else if (carbref == rnaref[1])
     	{ cerr << "\nError (user) : -c argument (C1p) not available for Protein mode \n" << endl; return 1;}
-        else if ((carbref != protref[0]) and (carbref != protref[1])){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+        else if (!(*find(protref.begin(), protref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
     }
     if (mindist > maxdist){ cerr << "\nError (user) : -M argument must be greater than -m argument\n" << endl; return 1; }
     if (mindist < 0){ cerr << "\nError (user) : -m argument cannot be negative\n" << endl; return 1; }
@@ -280,7 +335,7 @@ int main(int argc, char** argv)
 	    while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	    {
             string fl = line;
-            vector<vector<vector<string> >> Coords;
+            vector<vector<vector<vector<string> >>> Coords;
 
             if ((fl.size() == 9) || (fl.size() == 5))
             {
@@ -288,7 +343,8 @@ int main(int argc, char** argv)
             } else if (fl.size() == 4){
                 Coords = coord_pdb(in_dir+fl+".pdb", carbref);
             } else {
-                Coords = coord_pdb(in_dir+fl, carbref);}  // 3D vector {Chain[Atom[informations]]}
+                Coords = coord_pdb(in_dir+fl, carbref);}  // 4D vector {Chain[Residue[Atom[informations]]]}
+
 
             if (Coords.empty())
             {
@@ -308,18 +364,23 @@ int main(int argc, char** argv)
                     {
                         for (int j = i+Min; j < lenseq; j+=1)
                         {
-                            float Dist = distance(Coords[k][i], Coords[k][j]);
-                            if ((Dist > mindist) && (Dist < maxdist))
+                            for (int l1 = 0; l1 < Coords[k][i].size(); l1++)   // Atoms
                             {
-                                file_out << Dist << "    " << code3to1[Coords[k][i][3]]+code3to1[Coords[k][j][3]] 
-                                << "    " << fl << endl;
+                                for (int l2 = 0; l2 < Coords[k][j].size(); l2++)
+                                {
+                                    float Dist = distance(Coords[k][i][l1], Coords[k][j][l2]);
+                                    if ((Dist > mindist) && (Dist < maxdist))
+                                    {
+                                        file_out << Dist << "    " << code3to1[Coords[k][i][l1][3]]+code3to1[Coords[k][j][l2][3]] << "    " << fl << endl;
+                                    }
+                                }
                             }
-                            
                         }
                     }
                 } else {
 				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
             }
+
 
             if (cutoff) {
                 cpt +=1; cptot += 1;
@@ -352,7 +413,7 @@ int main(int argc, char** argv)
 	    while(getline(my_pdbs, line)) // 1 line = 1 PDB file
 	    {
             string fl = line;
-            vector<vector<vector<string> >> Coords;
+            vector<vector<vector<vector<string> >>> Coords;
 
             if ((fl.size() == 9) || (fl.size() == 5))
             {
@@ -360,7 +421,8 @@ int main(int argc, char** argv)
             } else if (fl.size() == 4){
                 Coords = coord_pdb(in_dir+fl+".pdb", carbref, true);
             } else {
-                Coords = coord_pdb(in_dir+fl, carbref, true);}  // 3D vector {Chain[Atom[informations]]}
+                Coords = coord_pdb(in_dir+fl, carbref, true);}  // 4D vector {Chain[Residue[Atom[informations]]]}
+
 
             if (Coords.empty())
             {
@@ -376,20 +438,27 @@ int main(int argc, char** argv)
                     if (Coords[k].size() < Max){
                     	lenseq = Coords[k].size();
                     } else { lenseq = Max;}
-                    for (int i = 0; i < lenseq-Min; i+=1)   // Residues
+                    for (int i = 0; i < lenseq-Min; i++)   // Residues
                     {
-                        for (int j = i+Min; j < lenseq; j+=1)
+                        for (int j = i+Min; j < lenseq; j++)
                         {
-                            float Dist = distance(Coords[k][i], Coords[k][j]);
-                            if ((Dist > mindist) && (Dist < maxdist))
+                            for (int l1 = 0; l1 < Coords[k][i].size(); l1++)   // Atoms
                             {
-                                file_out << Dist << "    " << Coords[k][i][3]+Coords[k][j][3] << "    " << fl << endl;
+                                for (int l2 = 0; l2 < Coords[k][j].size(); l2++)
+                                {
+                                    float Dist = distance(Coords[k][i][l1], Coords[k][j][l2]);
+                                    if ((Dist > mindist) && (Dist < maxdist))
+                                    {
+                                        file_out << Dist << "    " << Coords[k][i][l1][3]+Coords[k][j][l2][3] << "    " << fl << endl;
+                                    }
+                                }
                             }
                         }
                     }
                 } else {
                     cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
             }
+
 
             if (cutoff) {
                 cpt +=1; cptot += 1;

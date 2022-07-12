@@ -105,6 +105,7 @@ if __name__ == '__main__':
     # Get arguments
     args = get_arguments()
 
+    # Check bin size
     if args.min_length < 0 or args.max_length < 0:
         sys.stderr.write("Error (argument): Values 'bins', 'max' and 'min' must be positive\n")
         sys.exit()
@@ -120,6 +121,7 @@ if __name__ == '__main__':
         sys.stderr.write("Error (bins): 'bins' value must be a divisor of the difference into the minimum distance (min) and the maximum distance (max)\n")
         sys.exit()
 
+    # General variables
     print("Reading file "+args.distance_data+"... ", end="\r")
 
     if args.rna == True:
@@ -134,58 +136,63 @@ if __name__ == '__main__':
         if pair not in dic_pair:
             dic_pair[pair] = [0]*BINS
     
-    # Get file in a list
-    file2vec = []
-    with open(args.distance_data, "r") as fl:
-        for line in fl:
-            ln = line.strip("\n")
-            file2vec.append(ln.split())
-
-    print("Reading file "+args.distance_data+"... Done")
-    print("Distances preprocessing in progress...")
 
     count_list = []
     y_list = []
 
-    crt_pdb = file2vec[0][-1]
+    fl = open(args.distance_data, "r")
+    lin1 =  next(fl).strip("\n")
 
-    for line in file2vec:
-        if line[-1] == crt_pdb:
-            val = float(line[0]) 
-            if val > args.max_length or val < args.min_length:
-                continue
-            if val == args.max_length: 
-                value = int((val- args.min_length) / args.bins) - 1
-            else:
-                value = int((val- args.min_length) / args.bins)
-            crt_pair = check_pair(line[-2], dic_pair)
-            if crt_pair in dic_pair:
-                dic_pair[crt_pair][value] +=1
-            else:
-                sys.stderr.write("\tWarning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
-        else:
-            altlist = [dic_pair[key] for key in dic_pair]
-            count_list.append(altlist)
-            y_list.append(0)
-            if args.no_mean_struct == False:
-                count_list.append(get_mean_struct(dic_pair, BINS))
-                y_list.append(1)
-            crt_pdb = line[-1]
-            dic_pair = reinit_dict(dic_pair, 0)
+    crt_pdb = lin1.split()[-1] 
+    del fl
+    
+    print("Reading file "+args.distance_data+"... Done")
+    print("Distances preprocessing in progress...")
 
-            val = float(line[0]) 
-            if val > args.max_length or val < args.min_length:
-                continue
-            if val == args.max_length: 
-                value = int((val- args.min_length) / args.bins) - 1
+    with open(args.distance_data, "r") as fl:
+        for ln in fl:
+            ln1 = ln.strip("\n")
+            line = ln1.split()
+            if line[-1] == crt_pdb:
+                # Counting phase
+                val = float(line[0]) 
+                if val > args.max_length or val < args.min_length:
+                    continue
+                if val == args.max_length: 
+                    value = int((val- args.min_length) / args.bins) - 1
+                else:
+                    value = int((val- args.min_length) / args.bins)
+                crt_pair = check_pair(line[-2], dic_pair)
+                if crt_pair in dic_pair:
+                    dic_pair[crt_pair][value] +=1
+                else:
+                    sys.stderr.write("\tWarning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
             else:
-                value = int((val- args.min_length) / args.bins)
-            crt_pair = check_pair(line[-2], dic_pair)
-            if crt_pair in dic_pair:
-                dic_pair[crt_pair][value] +=1
-            else:
-                sys.stderr.write("Warning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
+                # Save data of native and generate non-native with it
+                altlist = [dic_pair[key] for key in dic_pair]
+                count_list.append(altlist)
+                y_list.append(0)
+                if args.no_mean_struct == False:
+                    count_list.append(get_mean_struct(dic_pair, BINS))
+                    y_list.append(1)
+                crt_pdb = line[-1]
+                dic_pair = reinit_dict(dic_pair, 0)
+    
+                # Start next native's counting phase
+                val = float(line[0]) 
+                if val > args.max_length or val < args.min_length:
+                    continue
+                if val == args.max_length: 
+                    value = int((val- args.min_length) / args.bins) - 1
+                else:
+                    value = int((val- args.min_length) / args.bins)
+                crt_pair = check_pair(line[-2], dic_pair)
+                if crt_pair in dic_pair:
+                    dic_pair[crt_pair][value] +=1
+                else:
+                    sys.stderr.write("Warning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
 
+    # For the last native and non-native 
     altlist = [dic_pair[key] for key in dic_pair]
     count_list.append(altlist)
     y_list.append(0)
@@ -200,6 +207,7 @@ if __name__ == '__main__':
 
     print("Dimension of the data table : "+str(X.shape))
 
+    # Heatmap to see the profile of the input data
     if args.hmap == True:
         my_bins = get_bins(args.min_length, args.max_length, args.bins)
         
