@@ -186,6 +186,14 @@ if __name__ == '__main__':
             else:
                 sys.stderr.write("Warning : '"+crt_pair+"' is not in the list of residue pairs ("+line[-1]+")\n")
 
+    altlist = [dic_pair[key] for key in dic_pair]
+    count_list.append(altlist)
+    y_list.append(0)
+    if args.no_mean_struct == False:
+        count_list.append(get_mean_struct(dic_pair, BINS))
+        y_list.append(1)
+    
+    
     print("Preprocessing done !")
     X = np.asarray(count_list)
     Y = np.asarray(y_list)
