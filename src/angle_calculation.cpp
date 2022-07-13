@@ -122,7 +122,7 @@ vector<vector<vector<string> >> coord_pdb(string pdbfile, bool rna = false){
 			tab_atom.push_back(Atom);               //
 			if (tab_atom.front() != refer.front())  // Avoids possible mismatches if the N-ter part
 			{                                       // is missing from the PDB file 
-				tab_atom.pop_back();                //
+				tab_atom.pop_back();            //
 			} else {
 				if (tab_chain.back() == line.substr(21,1))  // If still in the same chain
 				{

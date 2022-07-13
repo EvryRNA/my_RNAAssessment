@@ -256,8 +256,8 @@ int main(int argc, char** argv)
         "   -j   int      Maximum number of positions separating the residue pair\n"
         "   -m   float    Minimum interatomic distance (Å) (default=0.0)\n"
         "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"
-        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta) [Protein, default=CA]\n"
-        "                                       C4p (C4'), C1p (C1') [RNA, default=C4p]\n"         
+        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta), allatom [Protein, default=CA]\n"
+        "                                       C4p (C4'), C1p (C1'), allatom [RNA, default=C4p]\n"         
         "   -h            Help\n\n";
 
     string in_dir;    // Pathway of the repository
