@@ -223,6 +223,13 @@ float distance(vector<string> &atom1, vector<string> &atom2){
 }
 
 
+string noblank(string atom){
+	if (atom.substr(1,2) == "  "){ return atom.substr(0,1);}
+	else if (atom.substr(2,1) == " "){ return atom.substr(0,2);}
+	else { return atom;}
+}
+
+
 string ftsround(float num, int deci){  // For round correctly distance values
 	if (deci == 0){
 		int NUM = round(num);
@@ -371,7 +378,10 @@ int main(int argc, char** argv)
                                     float Dist = distance(Coords[k][i][l1], Coords[k][j][l2]);
                                     if ((Dist > mindist) && (Dist < maxdist))
                                     {
-                                        file_out << Dist << "    " << code3to1[Coords[k][i][l1][3]]+code3to1[Coords[k][j][l2][3]] << "    " << fl << endl;
+                                        string at1; string at2;
+                                        if (carbref == "allatom"){  // Avoid blank space
+                                        at1 = noblank(Coords[k][i][l1][4]); at2 = noblank(Coords[k][j][l2][4]);}
+                                        file_out << Dist << "    " << code3to1[Coords[k][i][l1][3]]+at1+code3to1[Coords[k][j][l2][3]]+at2 << "    " << fl << endl;
                                     }
                                 }
                             }
@@ -449,7 +459,10 @@ int main(int argc, char** argv)
                                     float Dist = distance(Coords[k][i][l1], Coords[k][j][l2]);
                                     if ((Dist > mindist) && (Dist < maxdist))
                                     {
-                                        file_out << Dist << "    " << Coords[k][i][l1][3]+Coords[k][j][l2][3] << "    " << fl << endl;
+                                        string at1; string at2;
+                                        if (carbref == "allatom"){  // Avoid blank space
+                                        at1 = noblank(Coords[k][i][l1][4]); at2 = noblank(Coords[k][j][l2][4]);}
+                                        file_out << Dist << "    " << Coords[k][i][l1][3]+at1+Coords[k][j][l2][3]+at2 << "    " << fl << endl;
                                     }
                                 }
                             }
