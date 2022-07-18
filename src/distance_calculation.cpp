@@ -60,7 +60,8 @@ vector<vector<vector<vector<string> >>> sch_coord_pdb(string pdbfile, string cha
 	int i = -1;
 
 	if (!rna){
-		if (Atref == "allatom"){ Reference = set_prot_allatom();}
+		if (Atref == "allatom"){ Reference = set_prot_allatom();}   // Choice of the model
+		else if (Atref == "CA+CB"){ Reference = {"CA ", "CB "};}    // representation
 		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
 		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
@@ -135,7 +136,8 @@ vector<vector<vector<vector<string> >>> coord_pdb(string pdbfile, string Atref, 
 	int i = -1;
 
 	if (!rna){
-		if (Atref == "allatom"){ Reference = set_prot_allatom();}
+		if (Atref == "allatom"){ Reference = set_prot_allatom();}   // Choice of the model
+		else if (Atref == "CA+CB"){ Reference = {"CA ", "CB "};}    // representation
 		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
 		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
@@ -251,7 +253,7 @@ int main(int argc, char** argv)
     string optlist =
         "   Usage:\n"
         "   ./distance_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-R] [-m MIN_DIST]\n"
-        "                          [-M MAX_DIST] [-i MIN_SEQ_SEPARATION] [-j MAX_SEQ_SEPARATION]\n\n"
+        "                          [-M MAX_DIST] [-i MIN_SEQ_SEPARATION] [-j MAX_SEQ_SEPARATION] [-c REPRESENTATION]\n\n"
         "   Options:\n"
         "   -d   string   Pathway of the repository where PDB files you interested of are\n"
         "   -l   string   List of all PDB files you want to be processed\n"
@@ -263,8 +265,9 @@ int main(int argc, char** argv)
         "   -j   int      Maximum number of positions separating the residue pair\n"
         "   -m   float    Minimum interatomic distance (Å) (default=0.0)\n"
         "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"
-        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta), allatom [Protein, default=CA]\n"
-        "                                       C4p (C4'), C1p (C1'), allatom [RNA, default=C4p]\n"         
+        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta), CA+CB, allatom [Protein, default=CA]\n"
+        "                                       C4p (C4'), C1p (C1'), allatom [RNA, default=C4p]\n"
+        "   -v            Verbosity of the program\n"        
         "   -h            Help\n\n";
 
     string in_dir;    // Pathway of the repository
@@ -276,9 +279,10 @@ int main(int argc, char** argv)
     float mindist = 0.0;
     float maxdist = 15.0;
     bool Rna = false;
+    bool verbose = false;
 
     int opt;
-    while ((opt = getopt(argc,argv, "hRc:d:l:o:i:j:m:M:")) != EOF){
+    while ((opt = getopt(argc,argv, "hRvc:d:l:o:i:j:m:M:")) != EOF){
         switch(opt){
             case 'd': in_dir = optarg; break;
             case 'l': listpdb = optarg; break;
@@ -289,12 +293,13 @@ int main(int argc, char** argv)
             case 'm': mindist = stof(optarg); break;
             case 'M': maxdist = stof(optarg); break;
             case 'R': Rna = true; break;
+            case 'v': verbose = true; break;
             case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
         }
     }
 
-    vector<string> protref = {"CA","CB","allatom"};
-    vector<string> rnaref = {"C4p","C1p","allatom"};
+    vector<string> protref = {"CA","CB","CA+CB","allatom"};   // Command line representation names
+    vector<string> rnaref = {"C4p","C1p","allatom"};          // 
 
     if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
     if (listpdb.empty() and output.empty()){ cerr << "\nError (argument) : Missing -l and -o arguments\n" << endl; return 1;}
@@ -305,14 +310,14 @@ int main(int argc, char** argv)
     	if (carbref == protref[0]) { carbref = "C4p";}
     	else if (carbref == protref[1])
     	{ cerr << "\nError (user) : -c argument (CB) not available for RNA mode \n" << endl; return 1;}
-        else if (!(*find(rnaref.begin(), rnaref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+        else if (!(*find(rnaref.begin(), rnaref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument for RNA mode\n" << endl; return 1;}
     }
     if (!Rna)
     {
-    	if (carbref == rnaref[0]) { carbref = "CA"; cerr << "\nWarning : -c argument (C4p) not available for Protein mode. Default use : CA\n" << endl;}
+    	if (carbref == rnaref[0]) { carbref = "CA"; cerr << "\nError : -c argument (C4p) not available for Protein mode. Default use : CA\n" << endl;}
     	else if (carbref == rnaref[1])
     	{ cerr << "\nError (user) : -c argument (C1p) not available for Protein mode \n" << endl; return 1;}
-        else if (!(*find(protref.begin(), protref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument\n" << endl; return 1;}
+        else if (!(*find(protref.begin(), protref.end(), carbref) == carbref)){ cerr << "\nError (argument) : Invalid -c argument Protein mode\n" << endl; return 1;}
     }
     if (mindist > maxdist){ cerr << "\nError (user) : -M argument must be greater than -m argument\n" << endl; return 1; }
     if (mindist < 0){ cerr << "\nError (user) : -m argument cannot be negative\n" << endl; return 1; }
@@ -379,8 +384,8 @@ int main(int argc, char** argv)
                                     if ((Dist > mindist) && (Dist < maxdist))
                                     {
                                         string at1; string at2;
-                                        if (carbref == "allatom"){  // Avoid blank space
-                                        at1 = noblank(Coords[k][i][l1][4]); at2 = noblank(Coords[k][j][l2][4]);}
+                                        if ((carbref != "CA") && (carbref != "CB")){  // Avoid blank space
+                                        at1 = noblank(Coords[k][i][l1][4])+"/"; at2 = noblank(Coords[k][j][l2][4]);}
                                         file_out << Dist << "    " << code3to1[Coords[k][i][l1][3]]+at1+code3to1[Coords[k][j][l2][3]]+at2 << "    " << fl << endl;
                                     }
                                 }
@@ -392,7 +397,7 @@ int main(int argc, char** argv)
             }
 
 
-            if (cutoff) {
+            if ((verbose) and (cutoff)) {
                 cpt +=1; cptot += 1;
                 cerr << "\n" << cpt << " : "  << "Warning (chain length too short): Protein residues in insufficient number for at least 1 chain ("+fl+")" << endl;
             } else {
@@ -461,7 +466,7 @@ int main(int argc, char** argv)
                                     {
                                         string at1; string at2;
                                         if (carbref == "allatom"){  // Avoid blank space
-                                        at1 = noblank(Coords[k][i][l1][4]); at2 = noblank(Coords[k][j][l2][4]);}
+                                        at1 = noblank(Coords[k][i][l1][4])+"/"; at2 = noblank(Coords[k][j][l2][4]);}
                                         file_out << Dist << "    " << Coords[k][i][l1][3]+at1+Coords[k][j][l2][3]+at2 << "    " << fl << endl;
                                     }
                                 }
@@ -473,7 +478,7 @@ int main(int argc, char** argv)
             }
 
 
-            if (cutoff) {
+            if ((verbose) and (cutoff)) {
                 cpt +=1; cptot += 1;
                 cerr << "\n" << cpt << " : "  << "Warning (chain length too short): RNA residues in insufficient number for at least 1 chain ("+fl+")" << endl;
             } else {
