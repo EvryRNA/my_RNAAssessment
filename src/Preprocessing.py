@@ -33,7 +33,7 @@ def get_arguments():
     parser.add_argument('-rna', action = 'store_true',
                         help = "Preprocessing for interatomic distances values which come ​​from an RNA structure dataset")
     parser.add_argument('-repr', choices = ['single', 'CA+CB', 'allatom'], default='single', 
-                        help = "Choice of model representation: 'single' and 'allatom' (RNA/protein), 'CA+CB' (only protein). Default: 'single'")
+                        help = "Choice of model representation: 'single' and 'allatom' (RNA/protein), 'CA+CB' (only protein). Default: 'single'")  ## Add name for new representation
     parser.add_argument('-max', dest='max_length', type=int, default=15,
                         help = "Maximum distance (default: 15)")
     parser.add_argument('-min', dest='min_length', type=int, default=0,
@@ -56,6 +56,9 @@ def get_AtomPair(RNA = False, representation = 'single'):
     all_prot_atom = ["AC", "ACA", "ACB", "AN", "AO", "CC", "CCA", "CCB", "CN", "CO", "CSG", "DC", "DCA", "DCB", "DCG", "DN", "DO", "DOD1", "DOD2", "EC", "ECA", "ECB", "ECD", "ECG", "EN", "EO", "EOE1", "EOE2", "FC", "FCA", "FCB", "FCD1", "FCD2", "FCE1", "FCE2", "FCG", "FCZ", "FN", "FO", "GC", "GCA", "GN", "GO", "HC", "HCA", "HCB", "HCD2", "HCE1", "HCG", "HN", "HND1", "HNE2", "HO", "IC", "ICA", "ICB", "ICD1", "ICG1", "ICG2", "IN", "IO", "KC", "KCA", "KCB", "KCD", "KCE", "KCG", "KN", "KNZ", "KO", "LC", "LCA", "LCB", "LCD1", "LCD2", "LCG", "LN", "LO", "MC", "MCA", "MCB", "MCE", "MCG", "MN", "MO", "MSD", "NC", "NCA", "NCB", "NCG", "NN", "NND2", "NO", "NOD1", "PC", "PCA", "PCB", "PCD", "PCG", "PN", "PO", "QC", "QCA", "QCB", "QCD", "QCG", "QN", "QNE2", "QO", "QOE1", "RC", "RCA", "RCB", "RCD", "RCG", "RCZ", "RN", "RNE", "RNH1", "RNH2", "RO", "SC", "SCA", "SCB", "SN", "SO", "SOG", "TC", "TCA", "TCB", "TCG2", "TN", "TO", "TOG1", "VC", "VCA", "VCB", "VCG1", "VCG2", "VN", "VO", "WC", "WCA", "WCB", "WCD1", "WCD2", "WCE2", "WCE3", "WCG", "WCH2", "WCZ2", "WCZ3", "WN", "WNE1", "WO", "YC", "YCA", "YCB", "YCD1", "YCD2", "YCE1", "YCE2", "YCG", "YCZ", "YN", "YO", "YOH"]
 
     all_rna_atom = ["AC1'", "AC2", "AC2'", "AC3'", "AC4", "AC4'", "AC5", "AC5'", "AC6", "AC8", "AN1", "AN3", "AN6", "AN7", "AN9", "AO2'", "AO3'", "AO4'", "AO5'", "AOP1", "AOP2", "AP", "CC1'", "CC2", "CC2'", "CC3'", "CC4", "CC4'", "CC5", "CC5'", "CC6", "CN1", "CN3", "CN4", "CO2", "CO2'", "CO3'", "CO4'", "CO5'", "COP1", "COP2", "CP", "GC1'", "GC2", "GC2'", "GC3'", "GC4", "GC4'", "GC5", "GC5'", "GC6", "GC8", "GN1", "GN2", "GN3", "GN7", "GN9", "GO2'", "GO3'", "GO4'", "GO5'", "GO6", "GOP1", "GOP2", "GP", "UC1'", "UC2", "UC2'", "UC3'", "UC4", "UC4'", "UC5", "UC5'", "UC6", "UC8", "UN1", "UN3", "UO2", "UO2'", "UO3'", "UO4", "UO4'", "UO5'", "UOP1", "UOP2", "UP"]
+
+    #''' First - Add new representation(s) - Create a list with all the reference atoms, if there is more than 1 atom for reference '''#
+    ## list_representation = []   # 1_letter_residue + atom_name (e.g. "LCB" for Leucine + Carbon Beta)
     
     AB_prot_atom = ["ACA", "ACB", "CCA", "CCB", "DCA", "DCB", "ECA", "ECB", "FCA", "FCB", "GCA", "HCA", "HCB", "ICA", "ICB", "KCA", "KCB", "LCA","LCB", "MCA", "MCB", "NCA", "NCB", "PCA", "PCB", "QCA", "QCB", "RCA", "RCB", "SCA", "SCB", "TCA","TCB", "VCA", "VCB", "WCA", "WCB", "YCA", "YCB"]
     
@@ -80,11 +83,16 @@ def get_AtomPair(RNA = False, representation = 'single'):
             atom_pair = pair_loop(all_prot_atom, True)
         elif representation == 'CA+CB':
             atom_pair = pair_loop(AB_prot_atom, True)
+        #''' Second - Add your representation as an option '''#
+        ## elif representation == 'representation_name':  # Name of the option in the command line
+        ##     atom_pair = pair_loop(list_representation, True)  # /!\ Always 'True' if representation != 'single'
         else:
-            atom_pair = pair_loop(prot_atom)
+            atom_pair = pair_loop(prot_atom)  # representation == 'single'
     else:  # RNA
         if representation == 'allatom':
             atom_pair = pair_loop(all_rna_atom, True)
+        ## elif representation == 'representation_name':  # Same process if the representation is for RNA structures
+        ##     atom_pair = pair_loop(list_representation, True) 
         else:
             atom_pair = pair_loop(rna_atom)
         
@@ -190,7 +198,7 @@ if __name__ == '__main__':
     args = get_arguments()
     
     if not args.distance_data and not args.angle_data:
-        sys.stderr.write("Error: You need to have at least 1 file (distances or dihedral angles) in input to process\n")
+        sys.stderr.write("Error: You need to have at least 1 file (distances [-D] or dihedral angles [-A]) in input to process\n")
         sys.exit()
 
     if args.distance_data:
@@ -260,9 +268,9 @@ if __name__ == '__main__':
                     if val > args.max_length or val < args.min_length:
                         continue
                     if val == args.max_length: 
-                        value = int((val- args.min_length) / args.bins) - 1
-                    else:
-                        value = int((val- args.min_length) / args.bins)
+                        value = int((val- args.min_length) / args.bins) - 1  #
+                    else:                                                    # Adapted value for bins != 1
+                        value = int((val- args.min_length) / args.bins)      #
                     crt_pair = check_pair(line[-2], dic_pair)
                     if crt_pair in dic_pair:
                         dic_pair[crt_pair][value] +=1
@@ -420,14 +428,14 @@ if __name__ == '__main__':
                 if line[0] != "NA":
                     val1 = float(line[0]) # angle 1: position 0 to 359
                 if line[1] != "NA":
-                    val2 = float(line[1]) + 360 # angle 2: position 360 to 719 # 360+180
+                    val2 = float(line[1]) + 360 # angle 2: position 360 to 719 # 360+360
                 if Asuppl == "OMEGA" and line[2] != "NA":
-                    val3 = float(line[2]) + 720
+                    val3 = float(line[2]) + 720 # angle 3: position 720 to 1079 # 360+720
                 if Asuppl == "THETA'":
                     if line[2] != "NA":
-                        val3 = float(line[2]) + 720
+                        val3 = float(line[2]) + 720 # angle 3: position 720 to 1079 # 360+720
                     if line[3] != "NA":
-                        val4 = float(line[3]) + 1080
+                        val4 = float(line[3]) + 1080 # angle 4: position 1080 to 1440 # 360+1080
                 
                 if val1 == 360: 
                     val1 = int(val1 - 1)

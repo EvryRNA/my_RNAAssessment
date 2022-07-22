@@ -24,6 +24,15 @@ vector<string> set_rna_allatom(){
     return atypes;
 }
 
+/* To add new representation(s) - First, if there is more than 1 atom for reference:
+Create a vector with all the reference atoms
+
+vector<string> vec_representation(){
+    vector<string> atypes = {};    // /!\ Length is fixed at 3 for each string (e.g. "C  ", "CA " or "C5'")
+    return atypes;
+
+*/
+
 void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, string &atoms, float &occup, int &iter, bool nx_step = true){
 	string X = lines.substr(30,8);  //
 	string Y = lines.substr(38,8);  // Atomic coordinates x, y, z
@@ -59,13 +68,25 @@ vector<vector<vector<vector<string> >>> sch_coord_pdb(string pdbfile, string cha
 	string residu;
 	int i = -1;
 
-	if (!rna){
+	// Representations
+	if (!rna){  // Proteins
 		if (Atref == "allatom"){ Reference = set_prot_allatom();}   // Choice of the model
 		else if (Atref == "CA+CB"){ Reference = {"CA ", "CB "};}    // representation
+		/* Second, add your vector as an alternative option 
+		Here for protein structures representation:
+
+		else if (Atref == "option_representation"){ Reference = vec_representation();}
+
+		*/
 		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
 		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
-	} else {
+	} else {  // RNA
 		if (Atref == "allatom"){ Reference = set_rna_allatom();}
+		/*Here for RNA structures representation:
+
+		else if (Atref == "option_representation"){ Reference = vec_representation();}
+
+		*/
 		else { Reference.push_back(Atref.substr(0,2)+"'");}
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
@@ -138,10 +159,21 @@ vector<vector<vector<vector<string> >>> coord_pdb(string pdbfile, string Atref, 
 	if (!rna){
 		if (Atref == "allatom"){ Reference = set_prot_allatom();}   // Choice of the model
 		else if (Atref == "CA+CB"){ Reference = {"CA ", "CB "};}    // representation
+		/* Second BIS (not really the same function than above) 
+		Here for protein structures representation:
+
+		else if (Atref == "option_representation"){ Reference = vec_representation();}
+
+		*/
 		else { Reference.push_back(Atref+" ");}  // e.g. CA and C4' (protein/RNA)
 		plc1 = 3; vrf1 = 17; plc2 = 3; // Atom and residue parameters for protein
 	} else {
 		if (Atref == "allatom"){ Reference = set_rna_allatom();}
+		/*Here for RNA structures representation:
+
+		else if (Atref == "option_representation"){ Reference = vec_representation();}
+
+		*/
 		else { Reference.push_back(Atref.substr(0,2)+"'");}
 		plc1 = 3; vrf1 = 19; plc2 = 1; space = "  "; // Atom and residue parameters for RNA
 	}
@@ -265,8 +297,8 @@ int main(int argc, char** argv)
         "   -j   int      Maximum number of positions separating the residue pair\n"
         "   -m   float    Minimum interatomic distance (Å) (default=0.0)\n"
         "   -M   float    Maximum interatomic distance (Å) (default=15.0)\n"
-        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta), CA+CB, allatom [Protein, default=CA]\n"
-        "                                       C4p (C4'), C1p (C1'), allatom [RNA, default=C4p]\n"
+        "   -c   string   Carbon of Reference : CA (Calpha), CB (Cbeta), CA+CB, allatom [Protein, default=CA]\n"  // Third - Add the name of your new
+        "                                       C4p (C4'), C1p (C1'), allatom [RNA, default=C4p]\n"               // representation in the help menu
         "   -v            Verbosity of the program\n"        
         "   -h            Help\n\n";
 
@@ -299,7 +331,7 @@ int main(int argc, char** argv)
     }
 
     vector<string> protref = {"CA","CB","CA+CB","allatom"};   // Command line representation names
-    vector<string> rnaref = {"C4p","C1p","allatom"};          // 
+    vector<string> rnaref = {"C4p","C1p","allatom"};          // Third BIS (Last step) - Add the name of your new representation as argument (Protein and/or RNA)
 
     if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
     if (listpdb.empty() and output.empty()){ cerr << "\nError (argument) : Missing -l and -o arguments\n" << endl; return 1;}
@@ -328,6 +360,7 @@ int main(int argc, char** argv)
 
     if (!Rna)
     {
+        // /!\ WARNING : non-standard residues non treated 
         map<string,string> code3to1;
         code3to1["ALA"]="A"; code3to1["CYS"]="C"; code3to1["ASP"]="D"; code3to1["GLU"]="E"; code3to1["PHE"]="F"; code3to1["GLY"]="G"; code3to1["HIS"]="H"; code3to1["ILE"]="I"; 
         code3to1["LYS"]="K"; code3to1["LEU"]="L"; code3to1["MET"]="M"; code3to1["ASN"]="N"; code3to1["PRO"]="P"; code3to1["GLN"]="Q"; code3to1["ARG"]="R"; code3to1["SER"]="S"; 
@@ -465,7 +498,7 @@ int main(int argc, char** argv)
                                     if ((Dist > mindist) && (Dist < maxdist))
                                     {
                                         string at1; string at2;
-                                        if (carbref == "allatom"){  // Avoid blank space
+                                        if ((carbref != "C4p") && (carbref != "C1p")){  // Avoid blank space
                                         at1 = noblank(Coords[k][i][l1][4])+"/"; at2 = noblank(Coords[k][j][l2][4]);}
                                         file_out << Dist << "    " << Coords[k][i][l1][3]+at1+Coords[k][j][l2][3]+at2 << "    " << fl << endl;
                                     }
