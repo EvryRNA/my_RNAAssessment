@@ -6,9 +6,41 @@
 #include <vector>
 #include <cmath>
 #include <algorithm> // find()
+#include <filesystem>
 #include <getopt.h>  // add options
 
+namespace fs = std::filesystem;
 using namespace std;
+
+vector<string> get_list_dir(string dir_path) {
+    vector<string> vec;
+    if (!fs::is_directory(dir_path)){
+        if (fs::is_regular_file(dir_path)) {
+            vec.push_back(dir_path) ;
+            return vec ;
+        }
+    }
+    for (const auto& entry : fs::directory_iterator(dir_path))
+    {
+        if (fs::is_regular_file(entry) && entry.path().extension() == ".pdb")
+        {
+            string f_name = entry.path().filename();
+            string all_path = dir_path + '/' + f_name;
+            vec.push_back(all_path);
+        }
+    }
+    return vec;
+}
+string removeWhitespace(string str) {
+    string result = "";
+    for (int i = 0; i < str.length(); i++) {
+        if (str[i] != ' ') {
+            result += str[i];
+        }
+    }
+    return result;
+}
+
 
 void add_coords(vector<vector<string>> &xyz, string &lines, string &residus, string &atoms, float &occup, int &iter, bool nx_step = true){
 	string X = lines.substr(30,8);  //
@@ -355,6 +387,7 @@ void get_thetaP_etaP(vector<vector<vector<string> >> &pdbcoord, string &order, s
 }
 
 
+
 int main(int argc, char** argv)
 {
 	string optlist =
@@ -363,9 +396,7 @@ int main(int argc, char** argv)
 		"                       [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
-		"   -l   string   List of all PDB files you want to be processed\n"
-		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt). The extension '.txt'\n"
-		"                 is automatically add to the output file name that you chose\n"
+		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt).\n"
 		"   -O            Add Omega angles values to those of Psi and Phi angles\n\n"
 		"   Access to the RNA processing mode and its options:\n"
 		"   -R            Calculation of Theta and Eta pseudotorsion angles (Using atoms P and C4')\n"
@@ -380,7 +411,6 @@ int main(int argc, char** argv)
 		"   -h            Help\n\n";
 
 	string in_dir;    // Pathway of the repository
-	string listpdb;   // File containing PDB files list
 	string output;    // Output file name without extension (".txt",".out",etc...)
 	bool PosChain = false;  // To add residue sequence number and chain identifier
 	bool ShowFile = false;  // To add PDB file code
@@ -396,7 +426,6 @@ int main(int argc, char** argv)
 	while ((opt = getopt(argc,argv, "hpfORaAti:d:l:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
-			case 'l': listpdb = optarg; break;
 			case 'o': output = optarg; break;
 			case 'p': PosChain = true; break;
 			case 'f': ShowFile = true; break;
@@ -411,8 +440,7 @@ int main(int argc, char** argv)
 	}
 
 	if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
-	if (listpdb.empty() and output.empty()){ cerr << "Error (argument) : Missing -l and -o arguments\n" << endl; return 1;}
-	if (listpdb.empty()){ cerr << "Error (argument) : Missing -l argument\n" << endl; return 1;}
+	if (output.empty()){ cerr << "Error (argument) : Missing -o arguments\n" << endl; return 1;}
 	if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
 	if (Rna and Omega){ cerr << "Error (option) : There is no omega pseudotorsion angle [-O] in RNA structure\n" << endl; return 1;}
 	if (!Rna and alterC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-a]\n" << endl; return 1;}
@@ -432,10 +460,9 @@ int main(int argc, char** argv)
 
 	/**** Processing for each file in PDB files list ****/
 
-	ifstream my_pdbs(listpdb);
 	string line;
 
-	string ffile = output+".txt";  // Output file name
+	string ffile = output;  // Output file name
 	ofstream file_out;
 	file_out.open(ffile);           // Open a new file for angle values
 	if (file_out.is_open())
@@ -450,21 +477,22 @@ int main(int argc, char** argv)
 	file_out << "  PSI  " << "      \t" << "  PHI  " << head3 << head_res << head_pos << head_ch << head_f << endl;
 
 	int cpt = 0; int cptot = 0;
-	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
+    vector<string> pdb_names = get_list_dir(in_dir);
+    for(int n_file = 0; n_file < pdb_names.size(); n_file++)
 	{
 		bool pdbmistake = false; bool cutoff = false;
-		string fl = line;
+		string fl = pdb_names[n_file];
 		vector<vector<vector<string> >> Coords;
 
 		if ((fl.size() == 9) || (fl.size() == 5))
 		{
-			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1));
+			Coords = sch_coord_pdb(fl.substr(0,4)+".pdb", fl.substr(4,1));
 			if (ShowFile){ pdb_file = "          "+fl.substr(0,4);}
 		} else if (fl.size() == 4){
-			Coords = coord_pdb(in_dir+fl+".pdb");
+			Coords = coord_pdb(fl+".pdb");
 			if (ShowFile){ pdb_file = "          "+fl;}
 		} else {
-			Coords = coord_pdb(in_dir+fl);  // 3D vector {Chain[Atom[informations]]}
+			Coords = coord_pdb(fl);  // 3D vector {Chain[Atom[informations]]}
 			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}}
 
 		if (Coords.empty())
@@ -564,42 +592,49 @@ int main(int argc, char** argv)
 	else {   /* If you want to work with RNA sequences */
 
 	/**** Processing for each file in PDB files list for RNA structures ****/
-
-	ifstream my_pdbs(listpdb);
 	string line;
 
-	string ffile = output+".txt";  // Output file name
+	string ffile = output;  // Output file name
 	ofstream file_out;
 	file_out.open(ffile);           // Open a new file for angle values
+	string separator = ",";
 	if (file_out.is_open())
 	{
-		string head1 = " THETA "; string head2 = "  ETA  ";
-		if (alterC1){ head1 = " THETA'"; head2 = "  ETA' ";}
-		if (C4andC1){ head3 = "    \t THETA'"; head4 = "    \t  ETA' ";}
+		string head1 = "THETA" ; string head2 = "ETA" ;
+		if (alterC1){ head1 = "THETA'" ; head2 = "ETA'" ;}
+		file_out << head1 << separator << head2 << separator;
+		if (C4andC1){ head3 = "THETA'"; head4 = "ETA'";
+            file_out << head3 << separator << head4 << separator;
+		}
 		if (PosChain)
 		{
-			head_pos = "     POSITION";
-			head_ch = "     CHAIN ";
+			head_pos = "POSITION";
+			head_ch = "CHAIN";
+			file_out << head_pos << separator << head_ch << separator;
 		}
-		if (ShowFile){ head_f = "     PDB_FILE";}
-	file_out << head1 << "      \t" << head2 << head3 << head4 << head_res << head_pos << head_ch << head_f << endl;
+		if (ShowFile){ head_f = "PDB_FILE" ;
+	        file_out << head_f ;
+		}
+	file_out << endl;
+//	file_out << head1 << separator << head2 << separator<< head3 << separator << head4 << separator << head_res  << separator << head_pos  << separator << head_ch << separator << head_f << endl;
 
 	int cpt = 0; int cptot = 0;
-	while(getline(my_pdbs, line)) // 1 line = 1 PDB file
+    vector<string> pdb_names = get_list_dir(in_dir);
+     for(int n_file = 0; n_file < pdb_names.size(); n_file++)
 	{
 		bool pdbmistake = false; bool cutoff = false;
-		string fl = line;
+		string fl = pdb_names[n_file];
 		vector<vector<vector<string> >> Coords;
 
 		if ((fl.size() == 9) || (fl.size() == 5))
 		{
-			Coords = sch_coord_pdb(in_dir+fl.substr(0,4)+".pdb", fl.substr(4,1), true);
+			Coords = sch_coord_pdb(fl.substr(0,4)+".pdb", fl.substr(4,1), true);
 			if (ShowFile){ pdb_file = "          "+fl.substr(0,4);}
 		} else if (fl.size() == 4){
-			Coords = coord_pdb(in_dir+fl+".pdb", true);
+			Coords = coord_pdb(fl+".pdb", true);
 			if (ShowFile){ pdb_file = "          "+fl;}
 		} else {
-			Coords = coord_pdb(in_dir+fl, true);  // 3D vector {Chain[Atom[informations]]}
+			Coords = coord_pdb(fl, true);  // 3D vector {Chain[Atom[informations]]}
 			if (ShowFile){ pdb_file = "          "+fl.substr(0,fl.size()-4);}}
 
 		if (Coords.empty())
@@ -616,9 +651,9 @@ int main(int argc, char** argv)
 					{
 						if (PosChain)
 						{
-							position1 = "\t"+Coords[k][i][5];
-							position2 = "-"+Coords[k][i+3][5];
-							res_chain = "      \t"+Coords[k][i][6];
+							position1 = removeWhitespace(Coords[k][i][5]);
+							position2 = removeWhitespace("-"+Coords[k][i+3][5]);
+							res_chain = removeWhitespace(Coords[k][i][6]);
 						}
 						
 						string order1 = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+3][4]+Coords[k][i+4][4];
@@ -627,21 +662,21 @@ int main(int argc, char** argv)
 						{
 							int j = i+1; string angle_theta; string angle_eta;
 							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j, pdbmistake, to360, decimal);
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-							<< position1 << position2 << res_chain << pdb_file << endl;   // Residue concerned for each angle
+							file_out << angle_theta << separator << angle_eta << separator << Coords[k][i][3] << Coords[k][i+3][3]  << separator
+							<< position1 << position2 << separator <<  res_chain << separator << removeWhitespace(pdb_file) << endl;   // Residue concerned for each angle
 						} else if (alterC1)
 						{
 							int j = i+2; string angle_thetaP; string angle_etaP;
 							get_thetaP_etaP(Coords, order2, angle_thetaP, angle_etaP, k, i, j, pdbmistake, to360, decimal);
-							file_out << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-							<< position1 << position2 << res_chain << pdb_file << endl;
+							file_out << angle_thetaP  << separator << angle_etaP << separator << Coords[k][i][3] << Coords[k][i+3][3] << separator
+							<< position1 << position2 << separator<< res_chain << separator << removeWhitespace(pdb_file) << endl;
 						} else if (C4andC1)
 						{
 							int j1 = i+1; int j2 = i+2; string angle_theta; string angle_eta; string angle_thetaP; string angle_etaP;
 							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j1, pdbmistake, to360, decimal, false);  // Reagjustement of i during get_thetaP_etaP()
 							get_thetaP_etaP(Coords, order2, angle_thetaP, angle_etaP, k, i, j2, pdbmistake, to360, decimal);
-							file_out << angle_theta << "      \t" << angle_eta << "      \t" << angle_thetaP << "      \t" << angle_etaP << "      \t" << Coords[k][i][3] << Coords[k][i+3][3] 
-							<< position1 << position2 << res_chain << pdb_file << endl;
+							file_out << angle_theta << separator << angle_eta << separator << angle_thetaP << separator << angle_etaP << separator << Coords[k][i][3] << Coords[k][i+3][3]
+							<< separator << position1 << position2 << separator << res_chain << separator << removeWhitespace(pdb_file) << endl;
 						}
 					}
 				} else {

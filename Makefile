@@ -1,13 +1,16 @@
 CC    = g++
-SRC1  = src/angle_calculation.cpp
-SRC2  = src/distance_calculation.cpp
-EXE1  = angle_calculation
-EXE2  = distance_calculation
+SRC1  = src/script_cpp/angle_calculation.cpp
+EXE1  = bin/angle_calculation
 
-all: $(EXE1) $(EXE2)
+all: $(EXE1) 
 
 $(EXE1): $(SRC1)
-	$(CC) $(SRC1) -o $(EXE1)
+	mkdir -p bin
+	$(CC) -std=c++17 -lstdc++fs $(SRC1) -o $(EXE1)
 
-$(EXE2): $(SRC2)
-	$(CC) $(SRC2) -o $(EXE2)
+docker_start:
+	docker build -t my_rna_assessment .
+	docker run -it my_rna_assessment
+
+run:
+	bin/angle_calculation -d decoys_data  -o output.csv -R -p -f -t
