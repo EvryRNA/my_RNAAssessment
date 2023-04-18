@@ -386,13 +386,45 @@ void get_thetaP_etaP(vector<vector<vector<string> >> &pdbcoord, string &order, s
 	}
 }
 
+string getHeaderPdbOutput(bool mol, bool Omega, bool PosChain, bool ShowFile, string separator){
+    vector<string> names = {"PSI", "PHI", "OMEGA", "POSITION", "CHAIN", "PDB_FILE"};
+    string output = names[0] + separator + names[1] ;
+    if (Omega){
+        output += separator + names[2];
+    }
+    if (PosChain){
+        output += separator + names[3] + separator + names[4];
+    }
+    if (ShowFile){
+        output += separator + names[5];
+    }
+    output += "\n";
+    return output;
+}
 
+string addValuesToOutput(string angle_psi, string angle_phi, string res_chain, string angle_omega,
+                    string coords, string positions, string pdb_file,
+                    bool Omega, bool PosChain, bool ShowFile, string separator){
+        string output = "";
+        output += angle_psi + separator + angle_phi;
+        if (Omega){
+            output += separator + angle_omega;
+        }
+        if (PosChain){
+            output += separator + coords + separator + positions;
+        }
+        if (ShowFile){
+            output+= separator + pdb_file;
+        }
+        output += "\n" ;
+        return output;
+}
 
 int main(int argc, char** argv)
 {
 	string optlist =
 		"   Usage:\n"
-		"   ./angle_calculation [-d PATHWAY_DATASET] [-l INPUT_LIST] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
+		"   ./angle_calculation [-d PATHWAY_DATASET] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
 		"                       [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
@@ -438,7 +470,6 @@ int main(int argc, char** argv)
 			case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
 		}
 	}
-
 	if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
 	if (output.empty()){ cerr << "Error (argument) : Missing -o arguments\n" << endl; return 1;}
 	if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
@@ -449,7 +480,7 @@ int main(int argc, char** argv)
 	if (decimal < 0) {cerr << "Error (user) : The number of decimal places [-i] must be greater than or equal to 0\n" << endl; return 1;}
 
 	string position1; string position2; string res_chain; string pdb_file;
-	string head3; string head4; string head_res = "        PAIR "; string head_pos; string head_ch; string head_f;
+	string head3; string head4; string head_res = "PAIR"; string head_pos; string head_ch; string head_f;
 
 	if (!Rna)
 	{
@@ -465,16 +496,11 @@ int main(int argc, char** argv)
 	string ffile = output;  // Output file name
 	ofstream file_out;
 	file_out.open(ffile);           // Open a new file for angle values
+    string separator = ",";
 	if (file_out.is_open())
 	{
-		if (Omega){ head3 = "    \t OMEGA ";}
-		if (PosChain)
-		{
-			head_pos = "     POSITION";
-			head_ch = "     CHAIN ";
-		}
-		if (ShowFile){ head_f = "     PDB_FILE";}
-	file_out << "  PSI  " << "      \t" << "  PHI  " << head3 << head_res << head_pos << head_ch << head_f << endl;
+        string head_file = getHeaderPdbOutput('prot', Omega, PosChain, ShowFile, separator);
+        file_out << head_file;
 
 	int cpt = 0; int cptot = 0;
     vector<string> pdb_names = get_list_dir(in_dir);
@@ -509,10 +535,10 @@ int main(int argc, char** argv)
 					{
 						if (PosChain)
 						{
-							position1 = "\t"+Coords[k][i][5];                      //
-							position2 = "-"+Coords[k][i+3][5];                     // 
-							res_chain = "      \t"+Coords[k][i][6];                // Add position, chain and PDB code
-						}                                                          //  
+							position1 = removeWhitespace(Coords[k][i][5]);
+							position2 = removeWhitespace("-"+Coords[k][i+3][5]);
+							res_chain = removeWhitespace(Coords[k][i][6]);  // Add position, chain and PDB code
+						}                                                          //
 						
 						string order = Coords[k][i][4]+Coords[k][i+1][4]+Coords[k][i+2][4]+Coords[k][i+3][4];
 						if (order == "N CAC N ")
@@ -520,42 +546,84 @@ int main(int argc, char** argv)
 							int j = i+2;
 							string angle_psi = ftsround(torsion_angle(Coords[k][i], Coords[k][i+1], Coords[k][i+2], Coords[k][i+3], to360), decimal);    // ATOMS : N-CA-C-N 
 							string angle_phi = ftsround(torsion_angle(Coords[k][j], Coords[k][j+1], Coords[k][j+2], Coords[k][j+3], to360), decimal);    // ATOMS : C-N-CA-C
+                          file_out << angle_psi << separator << angle_phi << separator;
+
 							if (Omega)     // If user wants also the omega angle values
 							{
 								int a = i+1;
 								string angle_omega = ftsround(torsion_angle(Coords[k][a], Coords[k][a+1], Coords[k][a+2], Coords[k][a+3], to360), decimal);   // ATOM : CA-C-N-CA
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-								<< position1 << position2 << res_chain << pdb_file << endl;
-							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-							<< position1 << position2 << res_chain << pdb_file << endl;}   // Residue concerned for each angle
+								file_out << angle_omega ;
+							    if (!PosChain && !ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+							if (PosChain){
+							file_out << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << separator << position1 << position2 << separator << res_chain;
+							    if (!ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+						    if (ShowFile)    	{
+						        file_out <<     removeWhitespace(pdb_file) << endl  ;
+						    }
 						} else if (order == "N C CAN ")
 						{
 							int j = i+1;
 							string angle_psi = ftsround(torsion_angle(Coords[k][i], Coords[k][i+2], Coords[k][i+1], Coords[k][i+3], to360), decimal);    // ATOMS : N-C-CA-N --> N-CA-C-N
 							string angle_phi = ftsround(torsion_angle(Coords[k][j], Coords[k][j+2], Coords[k][j+1], Coords[k][j+3], to360), decimal);    // ATOMS : C-CA-N-C --> C-N-CA-C
+							file_out << angle_psi << separator << angle_phi << separator;
 							if (Omega)
 							{
 								int a = i+2;
 								string angle_omega = ftsround(torsion_angle(Coords[k][a], Coords[k][a+2], Coords[k][a+1], Coords[k][a+3], to360), decimal);   // ATOM : CA-N-C-CA --> CA-C-N-CA
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_omega <<"      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-								<< position1 << position2 << res_chain << pdb_file << endl;
-							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-							<< position1 << position2 << res_chain << pdb_file << endl;}
+								file_out << angle_omega ;
+							    if (!PosChain && !ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+							if (PosChain){
+							file_out << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << separator << position1 << position2 << separator << res_chain ;
+							    if (!ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+						    if (ShowFile)    	{
+						        file_out <<     removeWhitespace(pdb_file) << endl  ;
+						    }
 						} else {
 
-							string angle_psi = "  NA  ";    // Returns NA if the atoms in the backbone are 
-							string angle_phi = "  NA  ";    // not well referenced for 1 pair of residue
+							string angle_psi = "NA";    // Returns NA if the atoms in the backbone are 
+							string angle_phi = "NA";    // not well referenced for 1 pair of residue
 							pdbmistake = true;
+							file_out <<angle_psi << separator << angle_phi << separator;
 							if (Omega)
 							{
-								file_out << angle_psi << "      \t" << angle_phi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-								<< position1 << position2 << res_chain << pdb_file << endl;
-							} else {
-							file_out << angle_psi << "      \t" << angle_phi << "      \t" << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] 
-							<< position1 << position2 << res_chain << pdb_file << endl;}
-							
+								file_out << angle_phi;
+							    if (!PosChain && !ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+							if (PosChain){
+							file_out << code3to1[Coords[k][i][3]] << code3to1[Coords[k][i+3][3]] << separator << position1 << position2 << separator << res_chain;
+							    if (!ShowFile){
+							        file_out << endl;
+							    } else {
+							        file_out << separator;
+							    }
+							}
+						    if (ShowFile)    	{
+						        file_out << removeWhitespace(pdb_file) << endl ;
+						    }
 							if (Coords[k][i+1][4] == "N ")         //
 							{                                      //
 								i -= 2;                            //
@@ -580,7 +648,7 @@ int main(int argc, char** argv)
 		cerr << "\n" << cptot  << " : " << "Warning (chain length too short): Presence of protein residues, but in insufficient number for at least 1 chain ("+fl+")" << endl;	
 	} else {
 	cpt +=1; cptot += 1;
-	cout.flush();
+    cout.flush();
     cout << "\r" << "Processed PDB files :" << cptot;}  // To see the evolution of the processing
 		}
 	}
