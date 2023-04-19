@@ -393,7 +393,7 @@ string getHeaderPdbOutput(string mol, bool Omega, bool PosChain, bool ShowFile, 
     string pdb_file = "PDB_FILE";
     string output;
     if (mol == "prot") {
-        output = "PHI" + separator + "PSI
+        output = "PHI" + separator + "PSI";
     } else if (mol == "rna") {
         string head_alterC1 = "ETA'"+ separator + "THETA'" ;
         string head_C1 = "ETA" + separator + "THETA";
