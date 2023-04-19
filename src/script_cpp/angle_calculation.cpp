@@ -297,31 +297,31 @@ void get_theta_eta(vector<vector<vector<string> >> &pdbcoord, string &order, str
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}    // ATOMS : C4'-P-C4'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
-		else { eta = "  NA  ";}}
+		else { eta = "NA";}}
 	else if (order == "P  C4'C1'C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+1], pdbcoord[k][i+5], pdbcoord[k][i+4], to360), deci);  // ATOMS : P-C4'-C4'-P --> P-C4'-P-C4'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}    // ATOMS : C4'-C4'-P-P --> C4'-P-C4'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
-		else { eta = "  NA  ";}}
+		else { eta = "NA";}}
 	else if (order == "C1'C4'P  C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i+1], pdbcoord[k][i+3], pdbcoord[k][i+4], to360), deci);  // ATOMS : C4'-P-P-C4' --> P-C4'-P-C4'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);}  // ATOMS : C4'-(P-)P-C4'-P--> (P-)C4'-P-C4'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+2], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
-		else { eta = "  NA  ";}}
+		else { eta = "NA";}}
 	else if (order == "C1'C4'C1'C4'"){
 		theta = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i+1], pdbcoord[k][i+5], pdbcoord[k][i+4], to360), deci);  // ATOMS : C4'-P-C4'-P --> P-C4'-P-C4'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+5], to360), deci);} // ATOMS : C4'-(P-)C4'-P-P --> (P-)C4'-P-C4'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			eta = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+4], pdbcoord[k][j+3], pdbcoord[k][j+7], to360), deci);}
-		else { eta = "  NA  ";}}
+		else { eta = "NA";}}
 	else {
-		theta = "  NA  ";  // Returns NA if the atoms in the backbone are 
-		eta = "  NA  ";    // not well referenced for 1 pair of residue
+		theta = "NA";  // Returns NA if the atoms in the backbone are 
+		eta = "NA";    // not well referenced for 1 pair of residue
 		pdbmistake = true;
 		if (adjust){
 		if (pdbcoord[k][i+1][4] == "P  ")        //
@@ -347,31 +347,31 @@ void get_thetaP_etaP(vector<vector<vector<string> >> &pdbcoord, string &order, s
 			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-P-C1'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+6], to360), deci);}
-		else { etaP = "  NA  ";}}
+		else { etaP = "NA";}}
 	else if (order == "P  C1'C1'P  "){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i], pdbcoord[k][i+2], pdbcoord[k][i+5], pdbcoord[k][i+3], to360), deci);  // ATOMS : P-C1'-C1'-P --> P-C1'-P-C1'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);}    // ATOMS : C1'-C1'-P-P --> C1'-P-C1'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+6], to360), deci);}
-		else { etaP = "  NA  ";}}
+		else { etaP = "NA";}}
 	else if (order == "C1'P  P  C1'"){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i], pdbcoord[k][i+3], pdbcoord[k][i+5], to360), deci);  // ATOMS : C1'-P-P-C1' --> P-C1'-P-C1'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+4], to360), deci);}  // ATOMS : C1'-(P-)P-C1'-P--> (P-)C1'-P-C1'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+1], pdbcoord[k][j+3], pdbcoord[k][j+6], to360), deci);}
-		else { etaP = "  NA  ";}}
+		else { etaP = "NA";}}
 	else if (order == "C1'P  C1'P  "){
 		thetaP = ftsround(torsion_angle(pdbcoord[k][i+2], pdbcoord[k][i], pdbcoord[k][i+5], pdbcoord[k][i+3], to360), deci);  // ATOMS : C1'-P-C1'-P --> P-C1'-P-C1'
 		if (pdbcoord[k][i+6][4] == "P  "){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);} // ATOMS : C1'-(P-)C1'-P-P --> (P-)C1'-P-C1'-P
 		else if ((pdbcoord[k][i+6][4] == "C1'") && (pdbcoord[k][i+8][4] == "P  ")){
 			etaP = ftsround(torsion_angle(pdbcoord[k][j-2], pdbcoord[k][j+3], pdbcoord[k][j+1], pdbcoord[k][j+4], to360), deci);}
-		else { etaP = "  NA  ";}}
+		else { etaP = "NA";}}
 	else {
-		thetaP = "  NA  ";  // Returns NA if the atoms in the backbone are 
-		etaP = "  NA  ";    // not well referenced for 1 pair of residue
+		thetaP = "NA";  // Returns NA if the atoms in the backbone are 
+		etaP = "NA";    // not well referenced for 1 pair of residue
 		pdbmistake = true;
 		if (pdbcoord[k][i+1][4] == "P  ")        //
 		{                                        //
