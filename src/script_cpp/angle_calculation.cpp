@@ -393,10 +393,10 @@ string getHeaderPdbOutput(string mol, bool Omega, bool PosChain, bool ShowFile, 
     string pdb_file = "PDB_FILE";
     string output;
     if (mol == "prot") {
-        output = "PSI" + separator + "PHI";
+        output = "PHI" + separator + "PSI
     } else if (mol == "rna") {
-        string head_alterC1 = "THETA'" + separator + "ETA'";
-        string head_C1 = "THETA" + separator + "ETA";
+        string head_alterC1 = "ETA'"+ separator + "THETA'" ;
+        string head_C1 = "ETA" + separator + "THETA";
         if (alterC1){
             output = head_alterC1;
         }
@@ -588,7 +588,7 @@ int main(int argc, char** argv)
                               angle_phi = "NA";    // not well referenced for 1 pair of residue
                               pdbmistake = true;
                         }
-                            string angles = angle_psi + separator + angle_phi ;
+                            string angles = angle_phi + separator + angle_psi ;
                             string output_to_file = addValuesToOutput(angles, angle_omega,
                                             coords, positions, removeWhitespace(pdb_file),
                                             Omega, PosChain, ShowFile, separator);
@@ -691,18 +691,18 @@ int main(int argc, char** argv)
 						{
 							int j = i+1; string angle_theta; string angle_eta;
 							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j, pdbmistake, to360, decimal);
-							angles+= angle_theta + separator + angle_eta ;
+							angles+= angle_eta + separator + angle_theta ;
 						} else if (alterC1)
 						{
 							int j = i+2; string angle_thetaP; string angle_etaP;
 							get_thetaP_etaP(Coords, order2, angle_thetaP, angle_etaP, k, i, j, pdbmistake, to360, decimal);
-							angles+= angle_thetaP + separator + angle_etaP ;
+							angles+= angle_etaP + separator + angle_thetaP ;
 						} else if (C4andC1)
 						{
 							int j1 = i+1; int j2 = i+2; string angle_theta; string angle_eta; string angle_thetaP; string angle_etaP;
 							get_theta_eta(Coords, order1, angle_theta, angle_eta, k, i, j1, pdbmistake, to360, decimal, false);  // Reagjustement of i during get_thetaP_etaP()
 							get_thetaP_etaP(Coords, order2, angle_thetaP, angle_etaP, k, i, j2, pdbmistake, to360, decimal);
-							angles += angle_theta + separator + angle_eta + separator + angle_thetaP + separator + angle_etaP;
+							angles += angle_eta + separator + angle_theta + separator + angle_etaP + separator + angle_thetaP;
 						}
                     string output = addValuesToOutput(angles, "", coords, positions, removeWhitespace(pdb_file), false, PosChain, ShowFile, separator);
 					file_out << output;
