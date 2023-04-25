@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+.DS_Store
+.idea
+decoys_data
+bin

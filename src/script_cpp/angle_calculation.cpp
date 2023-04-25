@@ -442,7 +442,7 @@ int main(int argc, char** argv)
 	string optlist =
 		"   Usage:\n"
 		"   ./angle_calculation [-d PATHWAY_DATASET] [-o OUTPUT_FILE_NAME] [-O] [-R] [-a|-A]\n"
-		"                       [-t] [-i DECIMAL_PLACE] [-p] [-f]\n\n"
+		"                       [-t] [-i DECIMAL_PLACE] [-p] [-f] [-v]\n\n"
 		"   Options:\n"
 		"   -d   string   Pathway of the repository where PDB files you interested of are\n"
 		"   -o   string   Name of your file in output (ex.: YourOuputName_pdbcode.txt).\n"
@@ -457,6 +457,7 @@ int main(int argc, char** argv)
 		"   -f            Allow the user to see from which PDB the observed angle values come from\n"
 		"   -i   int      Choosing the number of decimal places (default : 3)\n"
 		"   -t            For users who want angle values between 0° and 360° (default : [-180°;180°])\n"          
+		"   -v            Output in the terminal the values.\n\n"
 		"   -h            Help\n\n";
 
 	string in_dir;    // Pathway of the repository
@@ -470,9 +471,11 @@ int main(int argc, char** argv)
 	bool C4andC1 = false; bool check_A = false;  // Pseudotorsion angles with C4' and C1' (RNA)
 	int decimal = 3;  // Decimal places
 	bool to360 = false;  // [-180°;180°] or [0°;360°]
+	bool verbose= false;
+	bool toTerminal = false;
 
 	int opt;
-	while ((opt = getopt(argc,argv, "hpfORaAti:d:l:o:")) != EOF){
+	while ((opt = getopt(argc,argv, "hpfORaAtivd:o:")) != EOF){
 		switch(opt){
 			case 'd': in_dir = optarg; break;
 			case 'o': output = optarg; break;
@@ -482,19 +485,19 @@ int main(int argc, char** argv)
 			case 't': to360 = true; break;
 			case 'O': Omega = true; break;
 			case 'R': Rna = true; break;
+			case 'v': verbose=true; break;
 			case 'a': alterC4 = false; alterC1 = true; check_a = true; break;
 			case 'A': alterC4 = false; C4andC1 = true; check_A = true; break;
 			case 'h': fprintf(stderr, "%s", optlist.c_str()); return 0;
 		}
 	}
 	if (argc == 1){ fprintf(stderr, "%s", optlist.c_str()); return 1; }
-	if (output.empty()){ cerr << "Error (argument) : Missing -o arguments\n" << endl; return 1;}
-	if (output.empty()){ cerr << "Error (argument) : Missing -o argument\n" << endl; return 1;}
 	if (Rna and Omega){ cerr << "Error (option) : There is no omega pseudotorsion angle [-O] in RNA structure\n" << endl; return 1;}
 	if (!Rna and alterC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-a]\n" << endl; return 1;}
 	if (!Rna and C4andC1){ cerr << "Error (option) : Turn into the RNA mode [-R] to use option [-A]\n" << endl; return 1;}
 	if (check_a and check_A){ cerr << "Error (option) : -a and -A are incompatible options\n" << endl; return 1;}
 	if (decimal < 0) {cerr << "Error (user) : The number of decimal places [-i] must be greater than or equal to 0\n" << endl; return 1;}
+	if (output.empty()){ output = "output.csv"; toTerminal = true; }
 
 	string position1; string position2; string res_chain; string pdb_file;
 	string head3; string head4; string head_res = "PAIR"; string head_pos; string head_ch; string head_f;
@@ -517,7 +520,11 @@ int main(int argc, char** argv)
 	if (file_out.is_open())
 	{
         string head_file = getHeaderPdbOutput("prot", Omega, PosChain, ShowFile, false, false, separator);
-        file_out << head_file;
+        if (!toTerminal){
+            file_out << head_file;
+        } else {
+            cout << head_file;
+        }
 
 	int cpt = 0; int cptot = 0;
     vector<string> pdb_names = get_list_dir(in_dir);
@@ -592,7 +599,11 @@ int main(int argc, char** argv)
                             string output_to_file = addValuesToOutput(angles, angle_omega,
                                             coords, positions, removeWhitespace(pdb_file),
                                             Omega, PosChain, ShowFile, separator);
-                            file_out << output_to_file;
+                            if (!toTerminal){
+                                file_out << output_to_file;
+                            } else {
+                                cout << output_to_file;
+                            }
 
 
 							if (Coords[k][i+1][4] == "N ")         //
@@ -619,11 +630,16 @@ int main(int argc, char** argv)
 		cerr << "\n" << cptot  << " : " << "Warning (chain length too short): Presence of protein residues, but in insufficient number for at least 1 chain ("+fl+")" << endl;	
 	} else {
 	cpt +=1; cptot += 1;
-    cout.flush();
-    cout << "\r" << "Processed PDB files :" << cptot;}  // To see the evolution of the processing
+	if (verbose){
+        cout.flush();
+        cout << "\r" << "Processed PDB files :" << cptot;
+	}
+    }  // To see the evolution of the processing
 		}
 	}
-	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl; // To see how many file was processed at the end
+	if (verbose){
+        cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl; // To see how many file was processed at the end
+	}
 	file_out.close();}
 	return 0;}
 
@@ -640,7 +656,12 @@ int main(int argc, char** argv)
 	if (file_out.is_open())
 	{
         string head_file = getHeaderPdbOutput("rna", false, PosChain, ShowFile, alterC1, C4andC1, separator);
-        file_out << head_file;
+        if (!toTerminal){
+            file_out << head_file;
+        } else {
+            cout << head_file;
+        }
+
 
 	int cpt = 0; int cptot = 0;
     vector<string> pdb_names = get_list_dir(in_dir);
@@ -705,7 +726,11 @@ int main(int argc, char** argv)
 							angles += angle_eta + separator + angle_theta + separator + angle_etaP + separator + angle_thetaP;
 						}
                     string output = addValuesToOutput(angles, "", coords, positions, removeWhitespace(pdb_file), false, PosChain, ShowFile, separator);
-					file_out << output;
+                    if (!toTerminal){
+                        file_out << output;
+                    } else {
+                        cout << output;
+                    }
 					}
 				} else {
 				cutoff = true;}  // Check the length of the sequence, return an error if it is under the cutoff
@@ -719,11 +744,16 @@ int main(int argc, char** argv)
 		cerr << "\n" << cptot  << " : " << "Warning (chain length too short): Presence of RNA residues, but in insufficient number for at least 1 chain ("+fl+")" << endl;
 	} else {
 	cpt +=1; cptot += 1;
-	cout.flush();
-    cout << "\r" << "Processed PDB files :" << cptot;}
+	if (verbose){
+        cout.flush();
+        cout << "\r" << "Processed PDB files :" << cptot;
+	}
+    }
 		}
 	}
-	cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl;
+	if (verbose){
+        cout << "\nTotal processed files : " << cpt << " on " << cptot << " given" << endl;
+	}
 	file_out.close();}
 	return 0;}
 }
