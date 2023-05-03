@@ -68,7 +68,7 @@ Since they are C++ files, they must be compiled. Enter the following command, wh
 ```
 make
 ```
-Than, run them without any argument or with the option `-h` to get their help.
+Then, run them without any argument or with the option `-h` to get their help.
 
 ## How to use
 ### angle_calculation
